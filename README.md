@@ -1,6 +1,8 @@
 orbf_data_quality
 ==============================
 
+[![Binder](http://mybinder.org/badge.svg)](http://mybinder.org:/repo/grlurton/orbf_data_validation)
+
 We aim at predicting data quality in Open RBF based on existing reporting, and on DHIS2 reports.
 
 Project Organization
