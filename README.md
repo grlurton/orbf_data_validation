@@ -3,6 +3,13 @@ orbf_data_quality
 
 We aim at predicting data quality in Open RBF based on existing reporting, and on DHIS2 reports.
 
+Running Project
+------------
+
+Raw data is placed under data/raw/orbf_benin.csv. The script src/data/make_dataset.py should build the data used for analysis. All notebooks should run smoothly from there.
+
+
+
 Project Organization
 ------------
 
