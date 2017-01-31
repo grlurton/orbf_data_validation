@@ -5,7 +5,8 @@ import json as json
 
 data = pd.read_csv('../../data/raw/orbf_benin.csv' , delimiter = ';')
 
-indicators_names = pd.read_json('../../data/raw/pbf_indicatorstranslations.json')
+import codecs
+indicators_names = pd.read_json(codecs.open('../../data/raw/pbf_indicatorstranslations.json' , encoding = 'utf-8'))
 
 ## Keep only data with claimed and verified values
 print('Length Complete Data :' + str(len(data)))
@@ -15,6 +16,9 @@ print('Length Data with claimed and verified complete :' + str(len(data)))
 ## Formatting facilities names for simplicity
 data.entity_name[data.entity_name == 'CNHU-PPC (Centre National Hospitalier Universitaire Pneumo Phtysiologique de Cot CSC'] = "CNHU-PPC"
 data.entity_name = data.entity_name.str.title()
+
+
+
 
 ## Format Date Variables
 u = data['datafile_year'].astype(str) + '-' +  data['datafile_month'].astype(str)
