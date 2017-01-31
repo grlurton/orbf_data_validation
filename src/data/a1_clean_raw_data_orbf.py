@@ -29,15 +29,19 @@ data['period'] = data['date'].dt.to_period('M')
 indicators_list_names = indicators_names.loc[indicators_names.indicator_language == 'en' , ['indicator_id' , 'indicator_title']]
 indicators_list_names.columns = ['indicator_id' , 'indicator_label']
 
-print(len(data))
 data = pd.merge(data , indicators_list_names)
-print(len(data))
 
+## Dropping some indicators
+to_drop = ["Laboratoire" , "Planning familial" , "Salles d’hospitalisation" , "Consultation Externe / Urgences" , "Plan d’action" , "Hygiène & stérilisation" , "Bloc opératoire" , "Gestion du budget, des comptes et des biens" , "Indicateurs généraux" , "Gestion du malade" , "Médicaments traceurs" , "Nombre de patients contre-référés"]
+
+data = data[~(data.indicator_label.isin(to_drop))]
 
 to_export = ['entity_id' , 'entity_name' , 'entity_type' , 'parent_geozone_name' , 'geozone_name' , 'entity_fosa_id' ,  'content' , 'entity_status' , 'entity_active' , 'filetype_name' , 'filetype_id' , 'datafile_total' , 'datafile_author_id' , 'indicator_id' , 'indicator_label' , 'indicator_claimed_value' , 'indicator_verified_value' ,   'indicator_tarif' , 'indicator_montant' , 'entity_pop' , 'entity_pop_year' , 'geozone_pop' , 'geozone_pop_year' , 'parent_geozone_pop' , 'parent_geozone_pop_year' , 'period' , 'date']
 
 data_out = data[to_export]
 
+
+print('Final Length of data : ' , str(len(data_out)))
 print('Exporting the Data in HD5 file')
 
 store = pd.HDFStore('../../data/processed/orbf_benin.h5')
