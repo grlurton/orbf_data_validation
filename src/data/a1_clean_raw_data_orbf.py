@@ -1,10 +1,13 @@
 import pandas as pd
 import numpy as np
+import json as json
+
 
 data = pd.read_csv('../../data/raw/orbf_benin.csv' , delimiter = ';')
 
-## Keep only data with claimed and verified values
+indicators_names = pd.read_json('../../data/raw/pbf_indicatorstranslations.json')
 
+## Keep only data with claimed and verified values
 print('Length Complete Data :' + str(len(data)))
 data = data[(np.isnan(data.indicator_claimed_value) == False) & (np.isnan(data.indicator_verified_value) == False)]
 print('Length Data with claimed and verified complete :' + str(len(data)))
@@ -18,12 +21,18 @@ u = data['datafile_year'].astype(str) + '-' +  data['datafile_month'].astype(str
 data['date'] = pd.to_datetime(u)
 data['period'] = data['date'].dt.to_period('M')
 
-to_export = ['entity_id' , 'entity_name' , 'entity_type' , 'parent_geozone_name' , 'geozone_name' , 'entity_fosa_id' ,  'content' , 'entity_status' , 'entity_active' , 'filetype_name' , 'filetype_id' , 'datafile_total' , 'datafile_author_id' , 'indicator_id' , 'indicator_title' , 'indicator_claimed_value' , 'indicator_verified_value' ,   'indicator_tarif' , 'indicator_montant' , 'entity_pop' , 'entity_pop_year' , 'geozone_pop' , 'geozone_pop_year' , 'parent_geozone_pop' , 'parent_geozone_pop_year' , 'period' , 'date']
+## Label Indicator names
+indicators_list_names = indicators_names.loc[indicators_names.indicator_language == 'en' , ['indicator_id' , 'indicator_title']]
+indicators_list_names.columns = ['indicator_id' , 'indicator_label']
+
+print(len(data))
+data = pd.merge(data , indicators_list_names)
+print(len(data))
+
+
+to_export = ['entity_id' , 'entity_name' , 'entity_type' , 'parent_geozone_name' , 'geozone_name' , 'entity_fosa_id' ,  'content' , 'entity_status' , 'entity_active' , 'filetype_name' , 'filetype_id' , 'datafile_total' , 'datafile_author_id' , 'indicator_id' , 'indicator_label' , 'indicator_claimed_value' , 'indicator_verified_value' ,   'indicator_tarif' , 'indicator_montant' , 'entity_pop' , 'entity_pop_year' , 'geozone_pop' , 'geozone_pop_year' , 'parent_geozone_pop' , 'parent_geozone_pop_year' , 'period' , 'date']
 
 data_out = data[to_export]
-
-
-tab_c = pd.pivot_table(data , index = 'indicator_id' , columns = 'indicator_title' , aggfunc = 'count')
 
 print('Exporting the Data in HD5 file')
 
