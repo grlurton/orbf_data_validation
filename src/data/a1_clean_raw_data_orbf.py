@@ -31,15 +31,37 @@ indicators_list_names.columns = ['indicator_id' , 'indicator_label']
 
 data = pd.merge(data , indicators_list_names)
 
+
 ## Dropping some indicators
 to_drop = ['Evaluation Trimestrielle Qualite PMA' , 'Evaluation Trimestrielle Qualite PCA' , 'Quantites CHD' , 'Facture Mensuelle PCA' , 'FBR Communautaire Quantité']
 
 data = data[~(data.filetype_name.isin(to_drop))]
 
+## dropping facility months with no correction
+
+drop_no_correction = False
+
+
+def make_fac_desc(data) :
+    data['correction'] = (data.indicator_claimed_value == data.indicator_verified_value)
+    perc_right = sum(data['correction']) / len(data)
+
+    return pd.DataFrame([perc_right])
+
+fac_desc = data.groupby(['entity_name' , 'period']).apply(make_fac_desc).reset_index()
+fac_desc.columns = ['entity_name' ,'period' , 'level_1'  , 'percent_right']
+
+full_data = fac_desc[fac_desc.percent_right < 1]
+full_data = full_data[['entity_name' ,'period']]
+
+dat_to_keep = data
+
+if drop_no_correction == True :
+    dat_to_keep = pd.merge(data , full_data , on = ['entity_name' ,'period'])
+
 to_export = ['entity_id' , 'entity_name' , 'entity_type' , 'parent_geozone_name' , 'geozone_name' , 'entity_fosa_id' ,  'content' , 'entity_status' , 'entity_active' , 'filetype_name' , 'filetype_id' , 'datafile_total' , 'datafile_author_id' , 'indicator_id' , 'indicator_label' , 'indicator_claimed_value' , 'indicator_verified_value' ,   'indicator_tarif' , 'indicator_montant' , 'entity_pop' , 'entity_pop_year' , 'geozone_pop' , 'geozone_pop_year' , 'parent_geozone_pop' , 'parent_geozone_pop_year' , 'period' , 'date']
 
-data_out = data[to_export]
-
+data_out = dat_to_keep[to_export]
 
 print('Final Length of data : ' , str(len(data_out)))
 print('Exporting the Data in HD5 file')
