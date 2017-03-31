@@ -31,11 +31,15 @@ indicators_list_names.columns = ['indicator_id' , 'indicator_label']
 
 data = pd.merge(data , indicators_list_names)
 
-
-## Dropping some indicators
-to_drop = ['Evaluation Trimestrielle Qualite PMA' , 'Evaluation Trimestrielle Qualite PCA' , 'Quantites CHD' , 'Facture Mensuelle PCA' , 'FBR Communautaire Quantité']
-
+## Dropping some Reports
+to_drop = ['Evaluation Trimestrielle Qualite PMA' , 'Evaluation Trimestrielle Qualite PCA' , 'Quantites CHD' ,  'FBR Communautaire Quantité' , 'Facture Mensuelle PCA']
 data = data[~(data.filetype_name.isin(to_drop))]
+
+## Dropping some reports
+to_drop = ["Distribution des MII (femme enceinte)" , "Femmes enceintes VAT completement vaccinees (VAT 2-5)" , "Deuxieme prise de Sulfadoxine femme enceinte" , "Planification Familiale" , "Consultation Postnatale" , "Activites generales" ]
+data = data[~(data.indicator_label.isin(to_drop))]
+
+
 
 ## dropping facility months with no correction
 
