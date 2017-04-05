@@ -1,13 +1,27 @@
+#### This Script builds the framework to monitor individual OpenRBF reports.
+## Grégoire Lurton
+##
+##  v1   - 3/2017 : Creates the serie objects + methods for diagnostic. Simple algorith = median + 2sd
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from statsmodels.tsa.arima_model import ARIMA
 from datetime import datetime
 
-#%matplotlib inline
-
-
 def aggregate_data_payment(orbf_data):
+    """ Reports Summaries
+
+    Computes the reports claimed and verified payments
+
+    Parameters
+    ----------
+    orbf_data : DataFrame
+        The Full data from OpenRBF
+    Returns
+    -------
+    report_payments : DataFrame
+        The updated training data
+
+    """
     claimed_payment = sum(
         orbf_data.indicator_claimed_value * orbf_data.indicator_tarif)
     verified_payment = sum(
@@ -45,7 +59,12 @@ def update_training_set(training_dict, indicator, new_value):
 def data_submit(data, indicator):
     new_values = {'verified_value': np.nan}
     if indicator in data.index:
+
         dat_ind = data.loc[indicator]
+        ## At least one report as two values for one indicator, so filtering for that
+        if len(dat_ind.shape) > 1:
+            dat_ind = dat_ind.iloc[dat_ind.shape[0] - 1]
+
         new_values = {'claimed_value': dat_ind['indicator_claimed_value'],
                       'verified_value': dat_ind['indicator_verified_value']}
     return new_values
@@ -104,7 +123,7 @@ def overcost_alarm(claimed_values, expected_values, tarifs, mean_supervision_cos
     if claimed_payment == 0:
         claimed_payment = 1
     alarm = (claimed_payment - expected_payments > mean_supervision_cost) | (
-        expected_payments / claimed_payment > underfunding_max_risk)
+        claimed_payment / expected_payments  < underfunding_max_risk)
     return alarm
 
 
@@ -114,20 +133,25 @@ def make_output(data , expectation, validated, alarms):
     return out
 
 def collapse_output(result , tarifs):
+    output = {}
+    fac_id = list(result.keys())[0]
     date = []
     claimed = []
     verified = []
     expected = []
     validated = []
     alarms = []
-    for month in sorted(result.keys()) :
-        date.append(datetime.strptime(month , '%Y-%d'))
-        claimed.append(np.nansum(result[month]['claimed']*tarifs ))
-        verified.append(np.nansum(result[month]['verified']*tarifs))
-        expected.append(np.nansum(result[month]['expected']*tarifs))
-        validated.append(np.nansum(result[month]['validated']*tarifs))
-        alarms.append(result[month]['alarm'])
-    return {'date':date , 'claimed':claimed , 'verified':verified , 'expected':expected , 'validated':validated , 'alarms':alarms}
+    for month in sorted(result[fac_id].keys()) :
+        date.append(datetime.strptime(str(month) , '%Y-%d'))
+        #date.append(month)
+        claimed.append(np.nansum(result[fac_id][month]['claimed']*tarifs ))
+        verified.append(np.nansum(result[fac_id][month]['verified']*tarifs))
+        expected.append(np.nansum(result[fac_id][month]['expected']*tarifs))
+        validated.append(np.nansum(result[fac_id][month]['validated']*tarifs))
+        alarms.append(result[fac_id][month]['alarm'])
+    out = {'date':date , 'claimed':claimed , 'verified':verified , 'expected':expected , 'validated':validated , 'alarms':alarms}
+    output[fac_id] = out
+    return output
 
 def plot_monitoring(collapsed_output):
     plt.plot(collapsed_output['claimed'] , '--' , alpha=0.6 , label = 'Claimed Payment')
@@ -138,6 +162,3 @@ def plot_monitoring(collapsed_output):
     plt.plot(pd.Series(collapsed_output['validated'])[(pd.Series(collapsed_output['alarms']) == False)] , 'bo' , label = 'No Verification')
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.show()
-
-
-import fuzzy

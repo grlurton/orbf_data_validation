@@ -13,10 +13,6 @@ import time
 
 %matplotlib inline
 
-store = pd.HDFStore('../../data/processed/orbf_benin.h5')
-data = store['data']
-store.close()
-
 class serie(object):
     """ A Serie currently being monitored
 
@@ -151,7 +147,9 @@ class serie(object):
         self.diagnostic = diagnostic
         return self
 
-a = serie(u , 2 , 'aggregated')
+data.indicator_label
+
+a = serie(data , 2 , 'Enfants completement vaccines')
 
 ################################################################################
 ######### Run a validation process on all facilities for an indicator ##########
