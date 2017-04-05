@@ -66,9 +66,9 @@ class facility(object):
         training_set = {}
         for indic in self.indicators :
             if indic in new_report.report_data.index:
-                if self.alarm == False :
+                if new_report.alarm == False :
                     update = pd.Series([new_report.report_data.loc[indic , 'indicator_claimed_value']] , index =[new_report.month])
-                if self.alarm == True :
+                if new_report.alarm == True :
                     update = pd.Series([new_report.report_data.loc[indic , 'indicator_verified_value']] , index =[new_report.month])
                 self.training_set[indic] = self.training_set[indic].append(update)
 
@@ -84,14 +84,7 @@ tarifs = pd.Series(tarifs , index = data_orbf.indicator_label.unique())
 fac1 = facility(data_orbf[data_orbf.entity_id == 2] , tarifs)
 fac1.initiate_training_set('2013-12')
 fac1.arima_report_payment()
+fac1.reports['2014-01'].overcost_alarm(fac1.arima_forecast , tarifs , mean_supervision_cost , underfunding_max_risk)
+fac1.reports['2014-01'].alarm
 
-fac1.arima_forecast
-
-fac1.reports['2012-05'].overcost_alarm(fac1.arima_forecast , tarifs , mean_supervision_cost , underfunding_max_risk)
-fac1.reports['2015-01'].alarm
-
-print(len(fac1.training_set[indic]))
 fac1.update_training_set(fac1.reports['2014-01'])
-print(len(fac1.training_set[indic]))
-
-fac1.training_set[indic]
