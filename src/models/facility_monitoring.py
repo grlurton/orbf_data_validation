@@ -2,6 +2,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from reports_monitoring import *
+#import importlib
+#importlib.reload(reports_monitoring)
+#from reports_monitoring import *
+
 
 store = pd.HDFStore('../../data/processed/orbf_benin.h5')
 data_orbf = store['data']
@@ -12,20 +16,20 @@ class facility(object):
 
     """
 
-    def __init__(self , data) :
+    def __init__(self , data , tarifs) :
         self.facility_id = data.entity_id.iloc[0]
         self.facility_name = data.entity_name.iloc[0]
-        self.reports = self.make_reports(data)
+        self.reports = self.make_reports(data , tarifs)
         self.indicators = list(data.indicator_label.unique())
 
     def monitor_new_report(self) :
         out = np.random.choice(['Validate' , 'Supervise - Data' , 'Supervise - Services' , 'Supervise - Data and Quality'])
         return out
 
-    def make_reports(self , data):
+    def make_reports(self , data , tarifs):
         reports = {}
         for month in list(data.date.unique()) :
-            reports[str(month)[:7]] = report(data[data.date == month])
+            reports[str(month)[:7]] = report(data[data.date == month] , tarifs)
         return reports
 
     def initiate_training_set(self , date):
@@ -58,18 +62,16 @@ class facility(object):
             arima_forecast = arima_forecast.append(out)
         self.arima_forecast = arima_forecast
 
-    def overcost_alarm(self , new_report ,tarifs, mean_supervision_cost, underfunding_max_risk):
-        claimed_payment = np.nansum(new_report.report_data['indicator_claimed_value'] * tarifs)
-        expected_payments = np.nansum(self.arima_forecast.expected_values * tarifs)
-        if claimed_payment == 0:
-            claimed_payment = 1
-        alarm = (claimed_payment - expected_payments > mean_supervision_cost) | (claimed_payment / expected_payments  < underfunding_max_risk)
-        self.alarm = alarm
+    def update_training_set(self , new_report):
+        training_set = {}
+        for indic in self.indicators :
+            if indic in new_report.report_data.index:
+                if self.alarm == False :
+                    update = pd.Series([new_report.report_data.loc[indic , 'indicator_claimed_value']] , index =[new_report.month])
+                if self.alarm == True :
+                    update = pd.Series([new_report.report_data.loc[indic , 'indicator_verified_value']] , index =[new_report.month])
+                self.training_set[indic] = self.training_set[indic].append(update)
 
-
-fac1 = facility(data_orbf[data_orbf.entity_id == 2])
-fac1.initiate_training_set('2013-12')
-fac1.arima_report_payment()
 
 mean_supervision_cost = 170000
 underfunding_max_risk = 0.5
@@ -79,4 +81,17 @@ for i in data_orbf.indicator_label.unique() :
 tarifs = pd.Series(tarifs , index = data_orbf.indicator_label.unique())
 
 
-fac1.overcost_alarm(fac1.reports['2014-01']  , tarifs , mean_supervision_cost , underfunding_max_risk)
+fac1 = facility(data_orbf[data_orbf.entity_id == 2] , tarifs)
+fac1.initiate_training_set('2013-12')
+fac1.arima_report_payment()
+
+fac1.arima_forecast
+
+fac1.reports['2012-05'].overcost_alarm(fac1.arima_forecast , tarifs , mean_supervision_cost , underfunding_max_risk)
+fac1.reports['2015-01'].alarm
+
+print(len(fac1.training_set[indic]))
+fac1.update_training_set(fac1.reports['2014-01'])
+print(len(fac1.training_set[indic]))
+
+fac1.training_set[indic]
