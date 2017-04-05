@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import time
 
-%matplotlib inline
-
 class serie(object):
     """ A Serie currently being monitored
 
