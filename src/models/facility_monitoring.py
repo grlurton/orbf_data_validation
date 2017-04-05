@@ -42,8 +42,7 @@ class facility(object):
         self.training_set = training_set
 
     def arima_report_payment(self):
-        expected_values = []
-        std_vals = []
+        arima_forecast = pd.DataFrame([] , index = [])
         for indicator in list(self.training_set.keys()):
             training_set = self.training_set[indicator]
             yhat = np.nan
@@ -55,24 +54,29 @@ class facility(object):
                 yhat = prediction[0][0]
             except (ValueError , np.linalg.linalg.LinAlgError , IndexError) :
                 yhat = np.mean(training_set)
-            expected_values.append(yhat)
-            std_vals.append(standard_dev)
-        expected_values = pd.Series(expected_values, index=list(self.training_set.keys()))
-        std_vals = pd.Series(std_vals, index=list(self.training_set.keys()))
-        arima_forecast = {'expected_values':expected_values , 'std_vals':std_vals}
+            out = pd.DataFrame([{'expected_values':yhat , 'std_vals':standard_dev}] , index=[indicator])
+            arima_forecast = arima_forecast.append(out)
         self.arima_forecast = arima_forecast
+
+    def overcost_alarm(self , new_report ,tarifs, mean_supervision_cost, underfunding_max_risk):
+        claimed_payment = np.nansum(new_report.report_data['indicator_claimed_value'] * tarifs)
+        expected_payments = np.nansum(self.arima_forecast.expected_values * tarifs)
+        if claimed_payment == 0:
+            claimed_payment = 1
+        alarm = (claimed_payment - expected_payments > mean_supervision_cost) | (claimed_payment / expected_payments  < underfunding_max_risk)
+        self.alarm = alarm
 
 
 fac1 = facility(data_orbf[data_orbf.entity_id == 2])
 fac1.initiate_training_set('2013-12')
 fac1.arima_report_payment()
 
-fac1.arima_forecast
+mean_supervision_cost = 170000
+underfunding_max_risk = 0.5
+tarifs = []
+for i in data_orbf.indicator_label.unique() :
+    tarifs.append(data_orbf.indicator_tarif[data_orbf.indicator_label == i].tolist()[0])
+tarifs = pd.Series(tarifs , index = data_orbf.indicator_label.unique())
 
 
-
-ARIMA(fac1.training_set[indic], order=(1, 0, 0)).fit(disp=0)
-
-indic = 'Accouchement eutocique assiste'
-
-fac1.training_set
+fac1.overcost_alarm(fac1.reports['2014-01']  , tarifs , mean_supervision_cost , underfunding_max_risk)
