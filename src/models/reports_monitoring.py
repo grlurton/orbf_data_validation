@@ -2,32 +2,58 @@
 ## Grégoire Lurton
 ##
 ##  v1   - 3/2017 : Creates the serie objects + methods for diagnostic. Simple algorith = median + 2sd
+
 import pandas as pd
 import numpy as np
 from statsmodels.tsa.arima_model import ARIMA
 from datetime import datetime
 
-def aggregate_data_payment(orbf_data):
-    """ Reports Summaries
+store = pd.HDFStore('../../data/processed/orbf_benin.h5')
+data_orbf = store['data']
+store.close()
 
-    Computes the reports claimed and verified payments
+class report(object):
+    """ A report from orbf to be monitored
+
 
     Parameters
     ----------
-    orbf_data : DataFrame
-        The Full data from OpenRBF
-    Returns
-    -------
-    report_payments : DataFrame
-        The updated training data
-
+    data : DataFrame
+        A report for a facility month
     """
-    claimed_payment = sum(
-        orbf_data.indicator_claimed_value * orbf_data.indicator_tarif)
-    verified_payment = sum(
-        orbf_data.indicator_verified_value * orbf_data.indicator_tarif)
-    return pd.DataFrame([{'claimed_payment': claimed_payment, 'verified_payment': verified_payment}])
 
+    def __init__(self , data):
+        self.facility_id = data.entity_id.iloc[0]
+        self.facility_name = data.entity_name.iloc[0]
+        self.month = data.date.iloc[0]
+        self.report_data = data[['indicator_label' , 'indicator_claimed_value' , 'indicator_verified_value' , 'indicator_tarif' , 'indicator_montant']]
+        self.report_data = self.report_data.set_index('indicator_label')
+        self.report_payment = self.compute_report_payment()
+
+    def compute_report_payment(self):
+        """ Reports Summaries
+
+        Computes the reports claimed and verified payments
+
+        Parameters
+        ----------
+        orbf_data : DataFrame
+            The Full data from OpenRBF
+        Returns
+        -------
+        report_payments : DataFrame
+            The updated training data
+        """
+        claimed_payment = sum(self.report_data.indicator_claimed_value * self.report_data.indicator_tarif)
+        verified_payment = sum(self.report_data.indicator_verified_value * self.report_data.indicator_tarif)
+        return {'claimed_payment': claimed_payment, 'verified_payment': verified_payment}
+
+
+
+
+
+
+a = report(data[data.date == '2014-04'])
 
 def create_facility_training_dict(orbf_data, perc_train):
     TS = {}
@@ -55,7 +81,6 @@ def update_training_set(training_dict, indicator, new_value):
     training_dict['indicators'][indicator]['kept_values'].append(new_value)
     return training_dict
 
-
 def data_submit(data, indicator):
     new_values = {'verified_value': np.nan}
     if indicator in data.index:
@@ -68,7 +93,6 @@ def data_submit(data, indicator):
         new_values = {'claimed_value': dat_ind['indicator_claimed_value'],
                       'verified_value': dat_ind['indicator_verified_value']}
     return new_values
-
 
 def summary_cost(payments, verification_cost):
     total_cost = payments + verification_cost
