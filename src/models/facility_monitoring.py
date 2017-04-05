@@ -37,14 +37,42 @@ class facility(object):
             for month in training_months :
                 report = self.reports[month].report_data
                 if indic in report.index:
-                    rep_month = pd.Series([report.loc[indic , 'indicator_claimed_value']] , index =[ month])
+                    rep_month = pd.Series([report.loc[indic , 'indicator_claimed_value']] , index =[datetime.strptime(str(month) , '%Y-%d')])
                     training_set[indic] = training_set[indic].append(rep_month)
         self.training_set = training_set
+
+    def arima_report_payment(self):
+        expected_values = []
+        std_vals = []
+        for indicator in list(self.training_set.keys()):
+            training_set = self.training_set[indicator]
+            yhat = np.nan
+            standard_dev = np.nan
+            try:
+                model_fit = ARIMA(training_set, order=(1, 0, 0)).fit(disp=0)
+                prediction = model_fit.forecast()
+                standard_dev = model_fit.resid.std()
+                yhat = prediction[0][0]
+            except (ValueError , np.linalg.linalg.LinAlgError , IndexError) :
+                yhat = np.mean(training_set)
+            expected_values.append(yhat)
+            std_vals.append(standard_dev)
+        expected_values = pd.Series(expected_values, index=list(self.training_set.keys()))
+        std_vals = pd.Series(std_vals, index=list(self.training_set.keys()))
+        arima_forecast = {'expected_values':expected_values , 'std_vals':std_vals}
+        self.arima_forecast = arima_forecast
 
 
 fac1 = facility(data_orbf[data_orbf.entity_id == 2])
 fac1.initiate_training_set('2013-12')
+fac1.arima_report_payment()
+
+fac1.arima_forecast
 
 
 
-data_orbf.columns
+ARIMA(fac1.training_set[indic], order=(1, 0, 0)).fit(disp=0)
+
+indic = 'Accouchement eutocique assiste'
+
+fac1.training_set
