@@ -74,6 +74,33 @@ class facility(object):
             self.reports[date].overcost_alarm(self.arima_forecast , tarifs , mean_supervision_cost , underfunding_max_risk)
             self.update_training_set(self.reports[date])
 
+    def plot_supervision_trail(self , tarifs):
+        claimed = []
+        verified = []
+        alarms = []
+        for month in sorted(list(self.reports.keys())) :
+            claimed.append(self.reports[month].report_payment['claimed_payment'])
+            verified.append(self.reports[month].report_payment['verified_payment'])
+            alarms.append(self.reports[month].alarm)
+
+        training_set = pd.DataFrame(self.training_set).stack()
+        def validated_payments(data):
+            data = data.reset_index(level = 0 , drop = True)
+            out = np.nansum(data * tarifs)
+            return out
+
+        validated = training_set.groupby(level = 0).apply(mult_tarifs)
+        validated = list(validated)
+        plt.plot(claimed , '--' , alpha = 0.6 , label = 'Claimed Payment')
+        plt.plot(verified , '--r' , alpha = 0.6 , label = 'Verified Payment')
+        plt.plot(validated  , 'k' , alpha = 0.4)
+        plt.plot(pd.Series(validated)[alarms] , 'ro' , label = 'Verification Triggered')
+        plt.plot(pd.Series(validated)[~pd.Series(alarms)] , 'bo' , label = 'No Verification Triggered')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show()
+
+
+
 mean_supervision_cost = 170000
 underfunding_max_risk = 0.5
 tarifs = []
@@ -82,7 +109,11 @@ for i in data_orbf.indicator_label.unique() :
 tarifs = pd.Series(tarifs , index = data_orbf.indicator_label.unique())
 
 
-fac1 = facility(data_orbf[data_orbf.entity_id == 2] , tarifs)
+fac1 = facility(data_orbf[data_orbf.entity_id == 180] , tarifs)
 fac1.initiate_training_set('2012-01')
 fac1.arima_report_payment()
 fac1.make_supervision_trail(tarifs , mean_supervision_cost , underfunding_max_risk)
+fac1.plot_supervision_trail(tarifs)
+
+
+##TODO Store all ouputs + specific graphs on supervision. May be a new special object for that ?
