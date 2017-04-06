@@ -43,7 +43,7 @@ class report(object):
     def __init__(self , data , tarifs):
         self.facility_id = data.entity_id.iloc[0]
         self.facility_name = data.entity_name.iloc[0]
-        self.month = data.date.iloc[0]
+        self.date = data.date.iloc[0]
         self.report_data = data[['indicator_label' , 'indicator_claimed_value' , 'indicator_verified_value' , 'indicator_tarif']]
         self.report_data = self.report_data.set_index('indicator_label')
         self.report_payment = self.compute_report_payment(tarifs)
@@ -222,3 +222,6 @@ def plot_monitoring(collapsed_output):
     plt.plot(pd.Series(collapsed_output['validated'])[(pd.Series(collapsed_output['alarms']) == False)] , 'bo' , label = 'No Verification')
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.show()
+
+
+## TODO Add the alarms as different types, for later averaging
