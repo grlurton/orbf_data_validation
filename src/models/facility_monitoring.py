@@ -59,11 +59,14 @@ class facility(object):
     def update_training_set(self , new_report):
         training_set = {}
         for indic in self.indicators :
-            if indic in new_report.report_data.index:
+            if indic in new_report.report_data.index :
+                dat_indic = new_report.report_data.loc[indic]
+                if len(dat_indic.shape) > 1:
+                    dat_indic = dat_indic.iloc[dat_indic.shape[0] - 1]
                 if new_report.alarm == False :
-                    update = pd.Series([new_report.report_data.loc[indic , 'indicator_claimed_value']] , index =[new_report.date])
+                    update = pd.Series([dat_indic['indicator_claimed_value']] , index =[new_report.date])
                 if new_report.alarm == True :
-                    update = pd.Series([new_report.report_data.loc[indic , 'indicator_verified_value']] , index =[new_report.date])
+                    update = pd.Series([dat_indic['indicator_verified_value']] , index =[new_report.date])
                 self.training_set[indic] = self.training_set[indic].append(update)
         self.date_training_set = new_report.date
 
@@ -113,12 +116,16 @@ for i in data_orbf.indicator_label.unique() :
     tarifs.append(data_orbf.indicator_tarif[data_orbf.indicator_label == i].tolist()[0])
 tarifs = pd.Series(tarifs , index = data_orbf.indicator_label.unique())
 
+## Making General Verification Trail :
 
-fac1 = facility(data_orbf[data_orbf.entity_id == 180] , tarifs)
-fac1.initiate_training_set('2012-01')
-fac1.arima_report_payment()
-fac1.make_supervision_trail(tarifs , mean_supervision_cost , underfunding_max_risk)
-fac1.plot_supervision_trail(tarifs)
-
+%%time
+facilities = {}
+for fac_id in list(data_orbf.entity_id.unique()) :
+    facility_data = data_orbf[data_orbf.entity_id == fac_id]
+    min_date = str(min(facility_data.date))
+    new_facility = facility(facility_data , tarifs)
+    new_facility.initiate_training_set(min_date)
+    new_facility.make_supervision_trail(tarifs , mean_supervision_cost , underfunding_max_risk)
+    facilities[fac_id] = new_facility
 
 ##TODO Store all ouputs + specific graphs on supervision. May be a new special object for that ?
