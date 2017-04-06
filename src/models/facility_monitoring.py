@@ -17,6 +17,7 @@ class facility(object):
         self.facility_name = data.entity_name.iloc[0]
         self.reports = self.make_reports(data , tarifs)
         self.indicators = list(data.indicator_label.unique())
+        self.arima_forecast = []
 
     def make_reports(self , data , tarifs):
         reports = {}
@@ -53,7 +54,7 @@ class facility(object):
                 yhat = np.mean(training_set)
             out = pd.DataFrame([{'expected_values':yhat , 'std_vals':standard_dev}] , index=[indicator])
             arima_forecast = arima_forecast.append(out)
-        self.arima_forecast = arima_forecast
+        self.arima_forecast.append(arima_forecast)
 
     def update_training_set(self , new_report):
         training_set = {}
@@ -71,19 +72,22 @@ class facility(object):
         training_months = list(report_months[report_months > str(self.date_training_set)])
         for date in sorted(training_months):
             self.arima_report_payment()
-            self.reports[date].overcost_alarm(self.arima_forecast , tarifs , mean_supervision_cost , underfunding_max_risk)
+            self.reports[date].overcost_alarm(self.arima_forecast[len(self.arima_forecast) - 1] , tarifs , mean_supervision_cost , underfunding_max_risk)
             self.update_training_set(self.reports[date])
 
     def plot_supervision_trail(self , tarifs):
         claimed = []
         verified = []
         alarms = []
+        expected = []
         for month in sorted(list(self.reports.keys())) :
             claimed.append(self.reports[month].report_payment['claimed_payment'])
             verified.append(self.reports[month].report_payment['verified_payment'])
             alarms.append(self.reports[month].alarm)
-
+        for i in range(len(self.arima_forecast)):
+            expected.append(np.nansum(self.arima_forecast[i].expected_values * tarifs))
         training_set = pd.DataFrame(self.training_set).stack()
+
         def validated_payments(data):
             data = data.reset_index(level = 0 , drop = True)
             out = np.nansum(data * tarifs)
@@ -92,8 +96,9 @@ class facility(object):
         validated = training_set.groupby(level = 0).apply(mult_tarifs)
         validated = list(validated)
         plt.plot(claimed , '--' , alpha = 0.6 , label = 'Claimed Payment')
+        plt.plot(expected , '-.g' , alpha = 0.7  , label = 'Forecasted Payment')
         plt.plot(verified , '--r' , alpha = 0.6 , label = 'Verified Payment')
-        plt.plot(validated  , 'k' , alpha = 0.4)
+        plt.plot(validated  , 'k' , alpha = 0.4 , label = 'Validated Payment')
         plt.plot(pd.Series(validated)[alarms] , 'ro' , label = 'Verification Triggered')
         plt.plot(pd.Series(validated)[~pd.Series(alarms)] , 'bo' , label = 'No Verification Triggered')
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)

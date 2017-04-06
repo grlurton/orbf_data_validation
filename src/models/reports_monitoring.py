@@ -225,3 +225,4 @@ def plot_monitoring(collapsed_output):
 
 
 ## TODO Add the alarms as different types, for later averaging
+## TODO Move ARIMA
