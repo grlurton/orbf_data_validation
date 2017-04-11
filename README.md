@@ -15,12 +15,12 @@ Project Organization
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- Description and map of the project.
+    ├── README.md          <- What you are currently reading
     ├── data               <- Not commited in Git
     │   ├── external       <- Data from third party sources.
     │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- Original Data obtained from Bluesaquare.
+    │   ├── processed      <- The data that has been processed and ready for modeling
+    │   └── raw            <- Original Data obtained from Bluesquare.
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
@@ -28,31 +28,34 @@ Project Organization
     │
     ├── notebooks          <- Jupyter noteboks.
     |   ├── exploratory    <- Notebooks used for initial exploration of data.
-    |   └── raw            <- Notebooks for reporting and discussion of results.
+    |   └── reporting      <- Notebooks for reporting and discussion of results.
     │
     ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
     │
     ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
     │   └── figures        <- Generated graphics and figures to be used in reporting
     │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
+    ├── requirements.txt   <- The requirements file for reproducing the analysis environment
     │
     ├── src                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    |   |   ├── 1.clean_raw_data.py     <- Loading and cleaning of raw OpenRBF Data.
-    |   |   ├── make_dataset.py
-    │   │   └── XX.make_references.py    <- Making all color dictionaries, ordered lists and other useful meta.
+    |   ├── alarm_classification <- Scripts for classification of the different types of alarms raised by monitoring algorithms
+    │   ├── data_preparation     <- Scripts to prepare data
+    |   |   ├── a1.clean_raw_data_orbf.py      <- Loading and cleaning of raw OpenRBF Data.
+    |   |   ├── make_dataset.py                <- Generic script calling others
+    │   │   └── XX.make_references.py          <- Making all color dictionaries, ordered lists, tarifs lists.
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
+    │   ├── monitoring_algorithms <- Scripts to turn raw data into structured data for monitoring
     │   │   └── build_features.py
     │   │
     │   ├── models         <- Scripts to train models and then use trained models to make
     │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
+    |   |   ├── facility_monitoring.py      <- Definitions of Facilities Objects
+    |   |   ├── make_facilities.py          <- Script to change data into formatted Faclities objects
+    |   |   ├── reports_monitoring.py       <- Definitions of Reports Objects
+    |   |   ├── series_monitoring.py        <- Definition of Series Objects
+    │   │   └── simulate_supervisions.py    <- Script calling Facilities objects and running supervision
     │   │
     │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
     │       └── visualize.py
