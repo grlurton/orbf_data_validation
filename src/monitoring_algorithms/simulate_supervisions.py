@@ -35,8 +35,7 @@ def run(fac , data_orbf = data_orbf , tarifs = tarifs ,  mean_supervision_cost =
     fac.make_supervision_trail(tarifs , mean_supervision_cost , underfunding_max_risk)
     return fac
 
-#%%time
-## Benchmark : 4/10/27 - 4 cors, 77mins
+## Benchmark : 4/10/27 - 4 cores, 77mins
 result = dview.map_sync(run , facilities)
 subprocess.Popen('ipcluster stop')
 

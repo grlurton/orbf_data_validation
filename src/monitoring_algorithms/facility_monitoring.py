@@ -105,10 +105,10 @@ class facility(object):
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         plt.show()
 
-## BUG First value of series and alarms are not well aligned. 
+## BUG First value of series and alarms are not well aligned.
 ## IDEA Would like to store an overall description of each facility for query + some aggregation routines
 ## TODO Generic descriptives :
-## * Evolution of perc cost verification in time
 ## * Evolution of economies from this approach, in time
 ## * Distribution of costs by facilities (/ characteristics ?)
 ## * Distribution of costs by indicator / category
+## * Mean Time since last verification
