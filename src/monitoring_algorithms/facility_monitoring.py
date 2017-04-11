@@ -31,7 +31,7 @@ class facility(object):
                 self.reports[month].alarm = True
                 report = self.reports[month].report_data
                 if indic in report.index:
-                    rep_month = pd.Series([report.loc[indic , 'indicator_claimed_value']] , index =[datetime.strptime(str(month) , '%Y-%d')])
+                    rep_month = pd.Series([report.loc[indic , 'indicator_claimed_value']] , index =[datetime.strptime(str(month) , '%Y-%m')])
                     training_set[indic] = training_set[indic].append(rep_month)
         self.training_set = training_set
         self.date_training_set = date
@@ -86,6 +86,7 @@ class facility(object):
             alarms.append(self.reports[month].alarm)
         for i in range(len(self.arima_forecast)):
             expected.append(np.nansum(self.arima_forecast[i].expected_values * tarifs))
+        expected.insert(0 , np.nan)
         training_set = pd.DataFrame(self.training_set).stack()
 
         def validated_payments(data):
@@ -93,7 +94,7 @@ class facility(object):
             out = np.nansum(data * tarifs)
             return out
 
-        validated = training_set.groupby(level = 0).apply(mult_tarifs)
+        validated = training_set.groupby(level = 0).apply(validated_payments)
         validated = list(validated)
         plt.plot(claimed , '--' , alpha = 0.6 , label = 'Claimed Payment')
         plt.plot(expected , '-.g' , alpha = 0.7  , label = 'Forecasted Payment')
@@ -104,18 +105,9 @@ class facility(object):
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         plt.show()
 
-
-import sys
-prefix = sys.prefix
-assert 'orbf_monitoring' in prefix , 'Virtual Environment not loaded'
-
-
-
-## TODO Store all ouputs + specific graphs on supervision. May be a new special object for that ?
+## BUG First value of series and alarms are not well aligned. 
 ## IDEA Would like to store an overall description of each facility for query + some aggregation routines
 ## TODO Generic descriptives :
-## * Evolution of total cost in time
-## * Evolution of N verification in time
 ## * Evolution of perc cost verification in time
 ## * Evolution of economies from this approach, in time
 ## * Distribution of costs by facilities (/ characteristics ?)
