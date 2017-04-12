@@ -1,13 +1,37 @@
+# For warnings
 import warnings
 warnings.filterwarnings('ignore')
+import time
 
 ## Create Cluster to run
 import ipyparallel
 import subprocess
+import pickle
 start_cluster_command = 'ipcluster start -n 4'
 subprocess.Popen(start_cluster_command)
-clients = ipyparallel.Client()
-dview = clients[:]
+
+
+print('Starting Cluster')
+for i in range(0,100):
+    while True:
+        try:
+            clients = ipyparallel.Client()
+            dview = clients[:]
+        except:
+            time.sleep(5)
+            continue
+        break
+
+print('Loading Data')
+import pandas as pd
+
+pkl_file = open('../../data/processed/facilities.pkl', 'rb')
+facilities = pickle.load(pkl_file)
+pkl_file.close()
+store = pd.HDFStore('../../data/processed/orbf_benin.h5')
+tarifs = store['tarifs']
+store.close()
+
 
 ## Load the facility_monitoring module
 from facility_monitoring import *
