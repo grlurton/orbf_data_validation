@@ -31,7 +31,7 @@ class facility(object):
                 self.reports[month].alarm = True
                 report = self.reports[month].report_data
                 if indic in report.index:
-                    rep_month = pd.Series([report.loc[indic , 'indicator_claimed_value']] , index =[datetime.strptime(str(month) , '%Y-%m')])
+                    rep_month = pd.Series([report.loc[indic , 'indicator_verified_value']] , index =[datetime.strptime(str(month) , '%Y-%m')])
                     training_set[indic] = training_set[indic].append(rep_month)
         self.training_set = training_set
         self.date_training_set = date
@@ -105,7 +105,6 @@ class facility(object):
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         plt.show()
 
-## BUG First value of series and alarms are not well aligned.
 ## IDEA Would like to store an overall description of each facility for query + some aggregation routines
 ## TODO Generic descriptives :
 ## * Evolution of economies from this approach, in time
