@@ -14,6 +14,8 @@ class facility(object):
         self.reports = self.make_reports(data , tarifs)
         self.indicators = list(data.indicator_label.unique())
         self.arima_forecast = []
+        self.aedes_status = 'red'
+        self.last_supervision = None
 
     def make_reports(self , data , tarifs):
         reports = {}
@@ -104,6 +106,14 @@ class facility(object):
         plt.plot(pd.Series(validated)[~pd.Series(alarms)] , 'bo' , label = 'No Verification Triggered')
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         plt.show()
+
+
+
+
+
+
+
+
 
 ## IDEA Would like to store an overall description of each facility for query + some aggregation routines
 ## TODO Generic descriptives :
