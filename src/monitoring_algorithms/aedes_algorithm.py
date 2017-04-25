@@ -85,19 +85,19 @@ def make_cadran(ecart_moyen_pondere):
     plt.plot(list(ecart_moyen_pondere['Montant']) , list(ecart_moyen_pondere['Ecart Moyen Pondéré']) , 'ok')
 
 def make_facilities_classification(data , ponderation , perc_risk):
-    
+
     data['claimed_payment'] = list(data.indicator_claimed_value * data['indicator_tarif'])
     data['verified_payment'] = list(data.indicator_verified_value * data['indicator_tarif'])
-    
+
     if sum(data['claimed_payment'] - data['verified_payment']) != 0 :
         data = data.set_index('indicator_label')
         table_1 = make_first_table(data)
-    
+
         indicateurs_critiques = list(table_1[table_1['% Cumulé'] <= perc_risk].index)
-    
+
         data_classif = data.loc[indicateurs_critiques]
         data_classif = data_classif.reset_index()
-    
+
         ecart_moyen_pondere = data_classif.groupby(['entity_name']).apply(get_ecart_pondere , ponderation = ponderation)
         ecart_moyen_pondere = classify_facilities(ecart_moyen_pondere)
         return ecart_moyen_pondere

@@ -109,12 +109,6 @@ class facility(object):
 
 
 
-
-
-
-
-
-
 ## IDEA Would like to store an overall description of each facility for query + some aggregation routines
 ## TODO Generic descriptives :
 ## * Evolution of economies from this approach, in time
