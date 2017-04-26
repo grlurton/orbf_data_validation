@@ -1,8 +1,9 @@
 import pandas as pd
-import pandas as pd
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from generic_functions import *
+
 
 from IPython.display import set_matplotlib_formats
 plt.rcParams['figure.autolayout'] = True
@@ -29,19 +30,10 @@ bm_zones =['OUIDAH-KPOMASSE-TORI-BOSSITO', 'BANIKOARA', 'LOKOSSA-ATHIEME' , 'ADJ
 ################################################################################################
 ######### Functions ###########################
 
-def get_ecarts(data):
-    return sum(data['indicator_claimed_value'] - data['indicator_verified_value']) / sum(data['indicator_claimed_value'])
-
-def get_revenu_gagne(data):
-    return sum(data['indicator_montant'])
-
-def get_volume_financier_recupere(data) :
-    return sum(data['claimed_payment'] - data['verified_payment'])
-
 def make_first_table(data):
-    col1 = data.groupby(level = 0).apply(get_ecarts)
-    col2 = data.groupby(level = 0).apply(get_revenu_gagne)
-    col3 = data.groupby(level = 0).apply(get_volume_financier_recupere)
+    col1 = data.groupby(level = 3).apply(get_ecarts)
+    col2 = data.groupby(level = 3).apply(get_revenu_gagne)
+    col3 = data.groupby(level = 3).apply(get_volume_financier_recupere)
     col4 = col3 / get_volume_financier_recupere(data)
     output = col1.to_frame()
     output.columns = ['Ecarts']
@@ -59,7 +51,7 @@ def make_weights(ecarts):
 
 
 def get_ecart_pondere(data , ponderation):
-    ecarts = data.groupby('indicator_label').apply(get_ecarts)
+    ecarts = data.groupby(level=3).apply(get_ecarts)
     pond = 0
     for indic in list(ecarts.index) :
         pond = (pond  +  np.nan_to_num(ecarts[indic]*ponderation[indic]))
@@ -83,6 +75,18 @@ def make_cadran(ecart_moyen_pondere):
     plt.fill_between(np.array([0,q4_rev]) , np.array([min_em,min_em]), np.array([.1,.1]) , facecolor='green')
     plt.fill_between(np.array([q4_rev, max_rev]) ,np.array([min_em,min_em]),np.array([.1,.1]) , facecolor='orange')
     plt.plot(list(ecart_moyen_pondere['Montant']) , list(ecart_moyen_pondere['Ecart Moyen Pondéré']) , 'ok')
+
+def classify_facilities(ecart_moyen_pondere):
+    q4_rev = ecart_moyen_pondere['Montant'].quantile(0.4)
+    ecart_moyen_pondere['Class'] = 'red'
+    ecart_moyen_pondere.loc[(ecart_moyen_pondere['Montant'] <= q4_rev) &
+                            (ecart_moyen_pondere['Ecart Moyen Pondéré'] <= 0.1) , 'Class'] = 'green'
+    ecart_moyen_pondere.loc[(ecart_moyen_pondere['Montant'] <= q4_rev) &
+                            (ecart_moyen_pondere['Ecart Moyen Pondéré'] > 0.1) , 'Class'] = 'orange'
+    ecart_moyen_pondere.loc[(ecart_moyen_pondere['Montant'] > q4_rev) &
+                            (ecart_moyen_pondere['Ecart Moyen Pondéré'] <= 0.1), 'Class'] = 'orange'
+    ecart_moyen_pondere = ecart_moyen_pondere.sort('Class')
+    return ecart_moyen_pondere
 
 def make_facilities_classification(data , ponderation , perc_risk):
 

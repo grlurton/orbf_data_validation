@@ -37,10 +37,10 @@ def make_transveral_training_set(data , mois):
 def make_validation_trail(facility_data , mois):
     facility_name = facility_data.facility_name
     departement = facility_data.departement
-    reported_months = np.array(list(u.reports.keys()))
+    reported_months = np.array(list(facility_data.reports.keys()))
     validation_set_months = sorted(reported_months[reported_months <= mois])
     data_out = []
-    if facility_data.last_supervision is None :
+    if (facility_data.last_supervision is None) & (len(validation_set_months) > 0):
         month = validation_set_months[0]
         for month in validation_set_months :
             month_data = facility_data.reports[month].report_data
@@ -52,6 +52,7 @@ def make_validation_trail(facility_data , mois):
                 data_out = data_out.append(month_data)
             if len(data_out) == 0 :
                 data_out = month_data
+        data_out = data_out.sort_index()
         return data_out
 
 def make_full_supervision_trail(data , mois):
@@ -91,43 +92,62 @@ class monitoring_algorithm(object):
 
 
 
+
+
+
+### FOR TESTING ONLY
+import pickle
 from generic_functions import *
 from aedes_algorithm import *
 from generic_functions import *
 
-def make_first_table(data):
-    col1 = data.groupby(level = 2).apply(get_ecarts)
-    col2 = data.groupby(level = 2).apply(get_revenu_gagne)
-    col3 = data.groupby(level = 2).apply(get_volume_financier_recupere)
-    col4 = col3 / get_volume_financier_recupere(data)
-    output = col1.to_frame()
-    output.columns = ['Ecarts']
-    output['Revenus Totaux Gagnés'] = col2
-    output['Volume Financier Récupéré'] = col3
-    output['% Volume Financier Récupéré'] = col4
-
-    output = output.sort_values('% Volume Financier Récupéré' , ascending = False)
-    output['% Cumulé'] = output['% Volume Financier Récupéré'].cumsum()
-    return output
-
-##
-
-
-### FOR TESTING ONLY
-
-import pickle
 
 pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
 
-data_for_test = make_full_supervision_trail(facilities[0:1] , '2012-07')
-print(len(data_for_test))
-print(data_for_test.head())
+data_for_test = make_full_supervision_trail(facilities , '2016-01')
 
-def screen_function(data):
+def screen_function(data , perc_risk):
     data = get_payments(data)
-    table1 = make_first_table(data)
-    print(table_1)
+    table_1 = make_first_table(data)
+    ponderation = table_1['Volume Financier Récupéré'] / max(table_1['Volume Financier Récupéré'])
+    indicateurs_critiques = list(table_1[table_1['% Cumulé'] <= perc_risk].index)
+    if min(table_1['% Cumulé']) > perc_risk :
+        indicateurs_critiques = table_1.index[0]
+    if indicateurs_critiques == []:
+        pass
+    data = data.sort_index()
+    data_classif = data.loc[pd.IndexSlice[:,:,: ,indicateurs_critiques] , :]
+    try :
+        ecart_moyen_pondere = data_classif.groupby(level=1).apply(get_ecart_pondere , ponderation = ponderation)
+        ecart_moyen_pondere = classify_facilities(ecart_moyen_pondere)
+    except KeyError :
+        ecart_moyen_pondere = None
+    return ecart_moyen_pondere
 
-screen_function(data_for_test)
+
+u = data_for_test.groupby(level = 0).apply(screen_function , perc_risk = .8)
+
+%matplotlib inline
+
+def bar_cols(col_data , order_cols = ['green' , 'orange' , 'red']):
+    o = []
+    for col in order_cols:
+        try :
+            n = col_data.loc[col]
+            o.append(n)
+        except KeyError :
+            o.append(0)
+
+    plt.bar([0,1,2], o , color = order_cols)
+    plt.xticks([0,1,2] , order_cols)
+
+classes_counts = u.groupby(level = 0).Class.value_counts()
+fig=plt.figure(figsize=(18, 16) , dpi= 80, facecolor='w', edgecolor='k')
+for i in range(1,17):
+    plt.subplot(4,4,i)
+    departement = list(classes_counts.index.levels[0])[i-1]
+    bar_cols(classes_counts.loc[departement])
+    departement =departement.replace('’' , "'")
+    plt.title(departement , fontsize=15)
