@@ -1,3 +1,5 @@
+%%time
+
 # For warnings
 import warnings
 warnings.filterwarnings('ignore')
@@ -28,10 +30,6 @@ import pandas as pd
 pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
-store = pd.HDFStore('../../data/processed/orbf_benin.h5')
-tarifs = store['tarifs']
-store.close()
-
 
 ## Load the facility_monitoring module
 from facility_monitoring import *
@@ -59,8 +57,6 @@ def run(fac_data , tarifs = tarifs):
 facilities = dview.map_sync(run , fac_ids)
 subprocess.Popen('ipcluster stop')
 
-
-import pickle
 out = open('../../data/processed/facilities.pkl' , 'wb')
 pickle.dump(facilities, out , pickle.HIGHEST_PROTOCOL)
 out.close()

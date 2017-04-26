@@ -11,6 +11,7 @@ class facility(object):
     def __init__(self , data , tarifs) :
         self.facility_id = data.entity_id.iloc[0]
         self.facility_name = data.entity_name.iloc[0]
+        self.departement = data.geozone_name.iloc[0]
         self.reports = self.make_reports(data , tarifs)
         self.indicators = list(data.indicator_label.unique())
         self.arima_forecast = []
