@@ -17,6 +17,7 @@ class facility(object):
         self.arima_forecast = []
         self.aedes_status = 'red'
         self.last_supervision = None
+        self.supervisions = pd.DataFrame([] , index = [])
 
     def make_reports(self , data , tarifs):
         reports = {}

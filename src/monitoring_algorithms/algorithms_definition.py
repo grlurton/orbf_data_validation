@@ -65,8 +65,9 @@ def make_full_supervision_trail(data , mois):
 
 
 class monitoring_algorithm(object):
-    def __init__(self  , screening_method , alert_trigger , input_type , description = None ,
+    def __init__(self  , name , screening_method , alert_trigger , input_type , description = None ,
                     transversal = False , validation_trail = True) :
+        self.name = name
         self.transversal = transversal
         self.validation_trail = validation_trail
         self.screen = screening_method
@@ -102,10 +103,10 @@ class monitoring_algorithm(object):
             self.input_data.description_parameters = self.description_parameters
         if self.transversal == True :
             for facility in self.list_name_facilites :
-                if facility in self.supervision_list :
-                    fac_obj = get_facility(self.input_data , self.list_name_facilites , facility)
-                    fac_obj.last_supervision = self.mois
-                    self.input_data[self.list_name_facilites.index(facility)] = fac_obj
+                sup =  facility in self.supervision_list
+                fac_obj = get_facility(self.input_data , self.list_name_facilites , facility)
+                fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.name]))
+                self.input_data[self.list_name_facilites.index(facility)] = fac_obj
 
 
     def implementation_simulation(self , data , date_start):
@@ -141,17 +142,13 @@ def draw_supervision_months(description_parameters , **kwargs):
     red_sample = list(description_parameters[description_parameters['Class'] == 'red'].index)
 
     return green_sample + orange_sample + red_sample
+
 kwargs = {'perc_risk':.8}
-aedes_algorithm = monitoring_algorithm(screen_function , draw_supervision_months , 'verification_trail',
+aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months , 'verification_trail',
                                         transversal = True)
 aedes_algorithm.monitor(facilities  , mois = '2012-07'  , **kwargs)
 aedes_algorithm.trigger_supervisions()
 aedes_algorithm.return_parameters()
-
-aedes_algorithm.input_data[0].facility_name
-'Top' in aedes_algorithm.supervision_list
-
-len(aedes_algorithm.supervision_list)
 
 ### FOR TESTING ONLY
 import pickle
