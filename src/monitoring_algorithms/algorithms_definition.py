@@ -40,7 +40,7 @@ def make_validation_trail(facility_data , mois):
     reported_months = np.array(list(facility_data.reports.keys()))
     validation_set_months = sorted(reported_months[reported_months < mois])
     data_out = []
-    if (facility_data.last_supervision is None) & (len(validation_set_months) >= 0):
+    if (facility_data.last_supervision is None) & (len(validation_set_months) > 0):
         month = validation_set_months[0]
         for month in validation_set_months :
             month_data = facility_data.reports[month].report_data
@@ -74,12 +74,13 @@ class monitoring_algorithm(object):
         self.description = description
         self.input_type = input_type
 
-    def monitor(self , data , mois):
+    def monitor(self , data , mois , **kwargs):
         self.input_data = data
         self.mois = mois
         if self.transversal == True :
             assert type(self.input_data) == list , "This algorithm takes a list of facilities"
             print('Computing a transversal training set')
+            self.list_name_facilites= get_name_facilities_list(self.input_data)
             training_data = make_transveral_training_set(self.input_data , mois)
             supervision_trail = make_full_supervision_trail(self.input_data , mois)
         if self.transversal == False :
@@ -87,22 +88,24 @@ class monitoring_algorithm(object):
 
         print('Screening the data')
         if self.input_type == 'validated_data' :
-            screen_output = self.screen(training_data  , **kwargs)
+            screen_output = self.screen(training_data  , mois ,  **kwargs)
         if self.input_type == 'verification_trail' :
-            screen_output = self.screen(supervision_trail  , **kwargs)
+            screen_output = self.screen(supervision_trail  , mois ,  **kwargs)
         self.description_parameters = screen_output['description_parameters']
 
     def trigger_supervisions(self , **kwargs):
         alert = self.alert_trigger(self.description_parameters , **kwargs)
-        self.trigger_parameters = alert
-        return alert
-        ## si type = transversal : redistribuer les alertes dans les facilties une a une
+        self.supervision_list = alert
 
-    def return_parameters(self , alert):
+    def return_parameters(self):
         if self.transversal == False :
             self.input_data.description_parameters = self.description_parameters
         if self.transversal == True :
-            for
+            for facility in self.list_name_facilites :
+                if facility in self.supervision_list :
+                    fac_obj = get_facility(self.input_data , self.list_name_facilites , facility)
+                    fac_obj.last_supervision = self.mois
+                    self.input_data[self.list_name_facilites.index(facility)] = fac_obj
 
 
     def implementation_simulation(self , data , date_start):
@@ -110,7 +113,7 @@ class monitoring_algorithm(object):
         # TODO Just a placeholder. Way to make the simulation will vary by algorithm
 
 
-def screen_function(data , **kwargs):
+def screen_function(data , mois , **kwargs):
     perc_risk = kwargs['perc_risk']
     data = get_payments(data)
     table_1 = make_first_table(data)
@@ -137,19 +140,18 @@ def draw_supervision_months(description_parameters , **kwargs):
     orange_sample = list(orange_fac.sample(frac = 0.8).index)
     red_sample = list(description_parameters[description_parameters['Class'] == 'red'].index)
 
-    return {'green_sample':green_sample , 'orange_sample':orange_sample , 'red_sample':red_sample}
-
+    return green_sample + orange_sample + red_sample
 kwargs = {'perc_risk':.8}
-aedes_algorithm = monitoring_algorithm(screen_function , draw_supervision_months , 'verification_trail' ,
+aedes_algorithm = monitoring_algorithm(screen_function , draw_supervision_months , 'verification_trail',
                                         transversal = True)
-aedes_algorithm.monitor(facilities , **kwargs)
+aedes_algorithm.monitor(facilities  , mois = '2012-07'  , **kwargs)
+aedes_algorithm.trigger_supervisions()
+aedes_algorithm.return_parameters()
 
-a = aedes_algorithm.trigger_supervisions()
-a['green_sample']
+aedes_algorithm.input_data[0].facility_name
+'Top' in aedes_algorithm.supervision_list
 
-
-
-
+len(aedes_algorithm.supervision_list)
 
 ### FOR TESTING ONLY
 import pickle

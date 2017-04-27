@@ -11,3 +11,12 @@ def get_payments(data):
     data['claimed_payment'] = list(data.indicator_claimed_value * data['indicator_tarif'])
     data['verified_payment'] = list(data.indicator_verified_value * data['indicator_tarif'])
     return data
+
+def get_facilities_name(facility):
+    return facility.facility_name
+
+def get_name_facilities_list(list_facilities):
+    return list(map(get_facilities_name , list_facilities))
+
+def get_facility(list_facilities , list_name_facilites , facility_name):
+    return list_facilities[list_name_facilites.index(facility_name)]
