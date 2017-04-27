@@ -38,9 +38,9 @@ def make_validation_trail(facility_data , mois):
     facility_name = facility_data.facility_name
     departement = facility_data.departement
     reported_months = np.array(list(facility_data.reports.keys()))
-    validation_set_months = sorted(reported_months[reported_months <= mois])
+    validation_set_months = sorted(reported_months[reported_months < mois])
     data_out = []
-    if (facility_data.last_supervision is None) & (len(validation_set_months) > 0):
+    if (facility_data.last_supervision is None) & (len(validation_set_months) >= 0):
         month = validation_set_months[0]
         for month in validation_set_months :
             month_data = facility_data.reports[month].report_data
@@ -65,50 +65,53 @@ def make_full_supervision_trail(data , mois):
 
 
 class monitoring_algorithm(object):
-    def __init__(self  , screening_method , alert_trigger , description = None , transversal = False) :
+    def __init__(self  , screening_method , alert_trigger , input_type , description = None ,
+                    transversal = False , validation_trail = True) :
         self.transversal = transversal
+        self.validation_trail = validation_trail
         self.screen = screening_method
         self.alert_trigger = alert_trigger
         self.description = description
+        self.input_type = input_type
 
-    def monitor(self , data , **kwargs):
+    def monitor(self , data , mois):
+        self.input_data = data
+        self.mois = mois
         if self.transversal == True :
+            assert type(self.input_data) == list , "This algorithm takes a list of facilities"
             print('Computing a transversal training set')
-            training_data = make_transveral_training_set(data , kwargs['mois'])
-        screen_output = self.screen(data , kwargs)
-        self.description_parameters = screen_output['description_parameters']
-        ## Mettre parametres pour redistribuer les description parametres dans les facilites, avec methodes d'aggregation et de description
-        self.trigger_parameters = screen_output['trigger_parameters']
+            training_data = make_transveral_training_set(self.input_data , mois)
+            supervision_trail = make_full_supervision_trail(self.input_data , mois)
+        if self.transversal == False :
+            assert type(self.input_data) == 'facility_monitoring.facility' , "This algorithm takes a facility as input"
 
-    def raise_alert(self , **kwargs):
-        alert = self.alert_trigger(self.trigger_parameters , kwargs)
-        self.description_parameters.update(alert['description_parameters'])
+        print('Screening the data')
+        if self.input_type == 'validated_data' :
+            screen_output = self.screen(training_data  , **kwargs)
+        if self.input_type == 'verification_trail' :
+            screen_output = self.screen(supervision_trail  , **kwargs)
+        self.description_parameters = screen_output['description_parameters']
+
+    def trigger_supervisions(self , **kwargs):
+        alert = self.alert_trigger(self.description_parameters , **kwargs)
+        self.trigger_parameters = alert
         return alert
         ## si type = transversal : redistribuer les alertes dans les facilties une a une
+
+    def return_parameters(self , alert):
+        if self.transversal == False :
+            self.input_data.description_parameters = self.description_parameters
+        if self.transversal == True :
+            for
+
 
     def implementation_simulation(self , data , date_start):
         pass
         # TODO Just a placeholder. Way to make the simulation will vary by algorithm
 
 
-
-
-
-
-### FOR TESTING ONLY
-import pickle
-from generic_functions import *
-from aedes_algorithm import *
-from generic_functions import *
-
-
-pkl_file = open('../../data/processed/facilities.pkl', 'rb')
-facilities = pickle.load(pkl_file)
-pkl_file.close()
-
-data_for_test = make_full_supervision_trail(facilities , '2016-01')
-
-def screen_function(data , perc_risk):
+def screen_function(data , **kwargs):
+    perc_risk = kwargs['perc_risk']
     data = get_payments(data)
     table_1 = make_first_table(data)
     ponderation = table_1['Volume Financier Récupéré'] / max(table_1['Volume Financier Récupéré'])
@@ -124,10 +127,39 @@ def screen_function(data , perc_risk):
         ecart_moyen_pondere = classify_facilities(ecart_moyen_pondere)
     except KeyError :
         ecart_moyen_pondere = None
-    return ecart_moyen_pondere
+    return {'description_parameters':ecart_moyen_pondere}
+
+def draw_supervision_months(description_parameters , **kwargs):
+    green_fac = description_parameters[description_parameters['Class'] == 'green']
+    orange_fac = description_parameters[description_parameters['Class'] == 'orange']
+
+    green_sample = list(green_fac.sample(frac = 0.2).index)
+    orange_sample = list(orange_fac.sample(frac = 0.8).index)
+    red_sample = list(description_parameters[description_parameters['Class'] == 'red'].index)
+
+    return {'green_sample':green_sample , 'orange_sample':orange_sample , 'red_sample':red_sample}
+
+kwargs = {'perc_risk':.8}
+aedes_algorithm = monitoring_algorithm(screen_function , draw_supervision_months , 'verification_trail' ,
+                                        transversal = True)
+aedes_algorithm.monitor(facilities , **kwargs)
+
+a = aedes_algorithm.trigger_supervisions()
+a['green_sample']
 
 
-u = data_for_test.groupby(level = 0).apply(screen_function , perc_risk = .8)
+
+
+
+### FOR TESTING ONLY
+import pickle
+from generic_functions import *
+from aedes_algorithm import *
+from generic_functions import *
+pkl_file = open('../../data/processed/facilities.pkl', 'rb')
+facilities = pickle.load(pkl_file)
+pkl_file.close()
+
 
 %matplotlib inline
 
