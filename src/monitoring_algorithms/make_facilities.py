@@ -40,9 +40,6 @@ data_orbf = store['data']
 tarifs = store['tarifs']
 store.close()
 
-mean_supervision_cost = 170000
-underfunding_max_risk = 0.5
-
 ## Making List of facliities General Verification Trail :
 fac_ids = []
 for fac_id in data_orbf.entity_id.unique():

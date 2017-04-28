@@ -11,34 +11,21 @@ class facility(object):
     def __init__(self , data , tarifs) :
         self.facility_id = data.entity_id.iloc[0]
         self.facility_name = data.entity_name.iloc[0]
-        self.departement = data.geozone_name.iloc[0]
-        self.reports = self.make_reports(data , tarifs)
-        self.indicators = list(data.indicator_label.unique())
+        self.facility_type = data.entity_type.iloc[0]
+        self.facility_status = data.entity_status.iloc[0]
+        self.division = data.geozone_name.iloc[0]
+        self.departement = data.parent_geozone_name.iloc[0]
+        self.reports = self.make_reports(data)
         self.arima_forecast = []
-        self.aedes_status = 'red'
         self.last_supervision = None
         self.supervisions = pd.DataFrame([] , index = [])
+        self.screening_trace = {}
 
-    def make_reports(self , data , tarifs):
-        reports = {}
-        for month in list(data.date.unique()) :
-            reports[str(month)[:7]] = report(data[data.date == month] , tarifs)
+    def make_reports(self , data):
+        columns_to_keep = ['indicator_label' , 'indicator_claimed_value' , 'indicator_verified_value' , 'indicator_tarif' , 'period']
+        reports = data[columns_to_keep]
+        reports = reports.set_index(['period' , 'indicator_label']).sort_index()
         return reports
-
-    def initiate_training_set(self , date):
-        training_set = {}
-        report_months = pd.Series(list(self.reports.keys()))
-        training_months = list(report_months[report_months <= date])
-        for indic in self.indicators :
-            training_set[indic] = pd.Series([])
-            for month in training_months :
-                self.reports[month].alarm = True
-                report = self.reports[month].report_data
-                if indic in report.index:
-                    rep_month = pd.Series([report.loc[indic , 'indicator_verified_value']] , index =[datetime.strptime(str(month) , '%Y-%m')])
-                    training_set[indic] = training_set[indic].append(rep_month)
-        self.training_set = training_set
-        self.date_training_set = date
 
     def arima_report_payment(self):
         arima_forecast = pd.DataFrame([] , index = [])
@@ -56,20 +43,6 @@ class facility(object):
             out = pd.DataFrame([{'expected_values':yhat , 'std_vals':standard_dev}] , index=[indicator])
             arima_forecast = arima_forecast.append(out)
         self.arima_forecast.append(arima_forecast)
-
-    def update_training_set(self , new_report):
-        training_set = {}
-        for indic in self.indicators :
-            if indic in new_report.report_data.index :
-                dat_indic = new_report.report_data.loc[indic]
-                if len(dat_indic.shape) > 1:
-                    dat_indic = dat_indic.iloc[dat_indic.shape[0] - 1]
-                if new_report.alarm == False :
-                    update = pd.Series([dat_indic['indicator_claimed_value']] , index =[new_report.date])
-                if new_report.alarm == True :
-                    update = pd.Series([dat_indic['indicator_verified_value']] , index =[new_report.date])
-                self.training_set[indic] = self.training_set[indic].append(update)
-        self.date_training_set = new_report.date
 
     def make_supervision_trail(self , tarifs , mean_supervision_cost , underfunding_max_risk):
         report_months = pd.Series(list(self.reports.keys()))
@@ -110,7 +83,7 @@ class facility(object):
         plt.show()
 
 
-
+## IDEA Store date of first report for easy subsetting
 ## IDEA Would like to store an overall description of each facility for query + some aggregation routines
 ## TODO Generic descriptives :
 ## * Evolution of economies from this approach, in time
