@@ -1,97 +1,29 @@
-def extract_training_set(facility_data , mois) :
-
-    facility_name = facility_data.facility_name
-    departement = facility_data.departement
-    ## Get a training set for the facility
-    ## IDEA Check that the training is up to date with the right algorithm.
-    try :
-        training_set = facility_data.training_set
-    except AttributeError :
-        facility_data.initiate_training_set(mois)
-        training_set = facility_data.training_set
-
-    data_out = []
-    for indic in training_set.keys() :
-        data_indic = {'departement':departement ,
-                        'facility_name':facility_name ,
-                        'indicator_label':indic ,
-                        'date':list(training_set[indic].index) ,
-                        'values':list(training_set[indic])}
-
-        add = pd.DataFrame(data_indic)
-        if len(data_out) > 0 :
-            data_out = data_out.append(add)
-        if len(data_out) == 0 :
-            data_out = add
-    data_out = data_out.set_index(['departement' , 'facility_name' , 'indicator_label' , 'date'])
-    return data_out
-
-def make_transveral_training_set(data , mois):
-    def get_training_set(facility_data , mois = mois):
-        return extract_training_set(facility_data , mois)
-
-    transversal_training_set = list(map(get_training_set , data))
-    transversal_training_set = pd.concat(transversal_training_set)
-    return transversal_training_set
-
-def make_validation_trail(facility_data , mois):
-    facility_name = facility_data.facility_name
-    departement = facility_data.departement
-    reported_months = np.array(list(facility_data.reports.keys()))
-    validation_set_months = sorted(reported_months[reported_months < mois])
-    data_out = []
-    if (facility_data.last_supervision is None) & (len(validation_set_months) > 0):
-        month = validation_set_months[0]
-        for month in validation_set_months :
-            month_data = facility_data.reports[month].report_data
-            month_data['date'] = month
-            month_data['facility_name'] = facility_name
-            month_data['departement'] = departement
-            month_data = month_data.set_index(['departement' , 'facility_name' , 'date'] , append= True).reorder_levels(['departement' , 'facility_name' , 'date' , 'indicator_label'])
-            if len(data_out) > 0 :
-                data_out = data_out.append(month_data)
-            if len(data_out) == 0 :
-                data_out = month_data
-        data_out = data_out.sort_index()
-        return data_out
-
-def make_full_supervision_trail(data , mois):
-    def get_training_set(facility_data , mois = mois):
-        return make_validation_trail(facility_data , mois)
-
-    transversal_training_set = list(map(get_training_set , data))
-    transversal_training_set = pd.concat(transversal_training_set)
-    return transversal_training_set
-
-
 class monitoring_algorithm(object):
-    def __init__(self  , name , screening_method , alert_trigger , input_type , description = None ,
+    def __init__(self  , algorithm_name , screening_method , alert_trigger  , description = None ,
                     transversal = False , validation_trail = True) :
-        self.name = name
+        self.algorithm_name = algorithm_name
         self.transversal = transversal
         self.validation_trail = validation_trail
         self.screen = screening_method
         self.alert_trigger = alert_trigger
         self.description = description
-        self.input_type = input_type
+        self.validation_trail = validation_trail
 
-    def monitor(self , data , mois , **kwargs):
-        self.input_data = data
-        self.mois = mois
+    def monitor(self , facility_data , mois , **kwargs):
         if self.transversal == True :
-            assert type(self.input_data) == list , "This algorithm takes a list of facilities"
+            self.list_facilities_name = get_name_facilities_list(facility_data)
+        self.mois = mois
+        self.facility_data = facility_data
+        if self.transversal == True :
+            assert type(self.facility_data) == list , "This algorithm takes a list of facilities"
             print('Computing a transversal training set')
-            self.list_name_facilites= get_name_facilities_list(self.input_data)
-            training_data = make_transveral_training_set(self.input_data , mois)
-            supervision_trail = make_full_supervision_trail(self.input_data , mois)
+            self.list_name_facilites= get_name_facilities_list(self.facility_data)
+            training_data = self.make_transversal_training_set(self.facility_data , mois)
         if self.transversal == False :
-            assert type(self.input_data) == 'facility_monitoring.facility' , "This algorithm takes a facility as input"
-
+            assert type(self.facility_data) == 'facility_monitoring.facility' , "This algorithm takes a facility as input"
+            training_data = self.make_training_set(self.facility_data , mois)
         print('Screening the data')
-        if self.input_type == 'validated_data' :
-            screen_output = self.screen(training_data  , mois ,  **kwargs)
-        if self.input_type == 'verification_trail' :
-            screen_output = self.screen(supervision_trail  , mois ,  **kwargs)
+        screen_output = self.screen(training_data  , mois ,  **kwargs)
         self.description_parameters = screen_output['description_parameters']
 
     def trigger_supervisions(self , **kwargs):
@@ -100,20 +32,68 @@ class monitoring_algorithm(object):
 
     def return_parameters(self):
         if self.transversal == False :
-            self.input_data.description_parameters = self.description_parameters
+            self.facility_data.description_parameters = self.description_parameters
         if self.transversal == True :
             for facility in self.list_name_facilites :
                 sup =  facility in self.supervision_list
-                fac_obj = get_facility(self.input_data , self.list_name_facilites , facility)
-                fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.name]))
-                self.input_data[self.list_name_facilites.index(facility)] = fac_obj
+                fac_obj = get_facility(self.facility_data , facility)
+                fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.algorithm_name]))
+                self.facility_data[self.list_name_facilites.index(facility)] = fac_obj
 
+    def make_training_set(self , facility_data , mois) :
+        algorithm_name = self.algorithm_name
+        facility_name = facility_data.facility_name
+        departement = facility_data.departement
+        supervisions = facility_data.supervisions
+        reports_months = np.array(list(facility_data.reports.keys()))
+        if algorithm_name not in list(supervisions.columns) :
+            training_months = list(reports_months[reports_months < mois])
+            supervisions = supervisions.append(pd.DataFrame(['Initial Training']*len(training_months) , index = training_months , columns = [algorithm_name]))
+            if self.transversal == False :
+                self.facility_data.supervisions = supervisions
+            if self.transversal == True :
+                index_fac = self.list_name_facilites.index(facility_name)
+                self.facility_data[index_fac].supervisions = supervisions
+
+        if (algorithm_name in list(supervisions.columns)) & (mois in reports_months) :
+            training_months = list(supervisions.index[~supervisions[algorithm_name].isnull()])
+            validated_data = []
+            for month in training_months :
+                month_report = facility_data.reports[month].report_data
+                month_status = supervisions.loc[month , algorithm_name]
+                if month_status in [True , 'Initial Training']  :
+                    month_data = month_report[['indicator_verified_value' , 'indicator_tarif']]
+                if month_status == False :
+                    month_data = month_report[['indicator_claimed_value' , 'indicator_tarif']]
+                month_data.columns = ['indicator_validated_value' , 'indicator_tarif']
+                if self.validation_trail == True :
+                    month_data['indicator_claimed_value'] = month_report['indicator_claimed_value']
+                    month_data['verification_status'] = month_status
+                month_data['date'] = month
+                month_data['facility_name'] = facility_name
+                month_data['departement'] = departement
+                month_data = month_data.set_index(['departement' , 'facility_name' , 'date'] , append= True).reorder_levels(['departement' , 'facility_name' , 'date' , 'indicator_label'])
+                if len(validated_data) > 0 :
+                    validated_data = validated_data.append(month_data)
+                if len(validated_data) == 0 :
+                    validated_data = month_data
+            validated_data = validated_data.sort_index()
+            return validated_data
+
+    def make_transversal_training_set(self , data , mois):
+        def get_training_set(facility_data , mois = mois):
+            return self.make_training_set(facility_data , mois)
+        transversal_training_set = list(map(get_training_set , data))
+        transversal_training_set = pd.concat(transversal_training_set)
+        return transversal_training_set
 
     def implementation_simulation(self , data , date_start):
         pass
         # TODO Just a placeholder. Way to make the simulation will vary by algorithm
 
 
+
+######
 def screen_function(data , mois , **kwargs):
     perc_risk = kwargs['perc_risk']
     data = get_payments(data)
@@ -144,8 +124,8 @@ def draw_supervision_months(description_parameters , **kwargs):
     return green_sample + orange_sample + red_sample
 
 kwargs = {'perc_risk':.8}
-aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months , 'verification_trail',
-                                        transversal = True)
+aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months , transversal = True ,
+validation_trail = True)
 aedes_algorithm.monitor(facilities  , mois = '2012-07'  , **kwargs)
 aedes_algorithm.trigger_supervisions()
 aedes_algorithm.return_parameters()
