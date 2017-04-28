@@ -1,13 +1,13 @@
 class monitoring_algorithm(object):
-    def __init__(self  , algorithm_name , screening_method , alert_trigger  , description = None ,
+    def __init__(self  , algorithm_name , screening_method , alert_trigger  , implementation_simulation = None ,
                     transversal = False , validation_trail = True) :
         self.algorithm_name = algorithm_name
         self.transversal = transversal
         self.validation_trail = validation_trail
         self.screen = screening_method
         self.alert_trigger = alert_trigger
-        self.description = description
         self.validation_trail = validation_trail
+        self.implementation_simulation = implementation_simulation
 
     def monitor(self , facility_data , mois , **kwargs):
         if self.transversal == True :
@@ -26,18 +26,23 @@ class monitoring_algorithm(object):
         screen_output = self.screen(training_data  , mois ,  **kwargs)
         self.description_parameters = screen_output['description_parameters']
 
-    def trigger_supervisions(self , **kwargs):
+    def trigger_supervisions(self , mois , **kwargs):
+        ## TODO Finalize triggering for the longitudinal case
+        self.mois = mois
         alert = self.alert_trigger(self.description_parameters , **kwargs)
         self.supervision_list = alert
 
     def return_parameters(self):
+
         if self.transversal == False :
             self.facility_data.description_parameters = self.description_parameters
         if self.transversal == True :
             for facility in self.list_name_facilites :
-                sup =  facility in self.supervision_list
                 fac_obj = get_facility(self.facility_data , facility)
-                fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.algorithm_name]))
+                if facility in self.supervision_list :
+                    fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.algorithm_name]))
+                if facility not in self.supervision_list :
+                    fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([False] , index = [self.mois] , columns = [self.algorithm_name]))
                 self.facility_data[self.list_name_facilites.index(facility)] = fac_obj
 
     def make_training_set(self , facility_data , mois) :
@@ -47,7 +52,7 @@ class monitoring_algorithm(object):
         supervisions = facility_data.supervisions
         reports_months = np.array(list(facility_data.reports.keys()))
         if algorithm_name not in list(supervisions.columns) :
-            training_months = list(reports_months[reports_months < mois])
+            training_months = sorted(list(reports_months[reports_months < mois]))
             supervisions = supervisions.append(pd.DataFrame(['Initial Training']*len(training_months) , index = training_months , columns = [algorithm_name]))
             if self.transversal == False :
                 self.facility_data.supervisions = supervisions
@@ -56,11 +61,14 @@ class monitoring_algorithm(object):
                 self.facility_data[index_fac].supervisions = supervisions
 
         if (algorithm_name in list(supervisions.columns)) & (mois in reports_months) :
-            training_months = list(supervisions.index[~supervisions[algorithm_name].isnull()])
+            training_months =  sorted(list(supervisions.index[~supervisions[algorithm_name].isnull()]))
             validated_data = []
             for month in training_months :
                 month_report = facility_data.reports[month].report_data
-                month_status = supervisions.loc[month , algorithm_name]
+                try :
+                    month_status = supervisions.loc[month , algorithm_name]
+                except KeyError :
+                    pass ## Some facilities miss some reports. Should be solved when passing to a central DataFrame
                 if month_status in [True , 'Initial Training']  :
                     month_data = month_report[['indicator_verified_value' , 'indicator_tarif']]
                 if month_status == False :
@@ -87,48 +95,24 @@ class monitoring_algorithm(object):
         transversal_training_set = pd.concat(transversal_training_set)
         return transversal_training_set
 
-    def implementation_simulation(self , data , date_start):
-        pass
-        # TODO Just a placeholder. Way to make the simulation will vary by algorithm
+    def simulate_implementation(self , date_start , date_stop  , data , **kwargs):
+        if self.transversal == True :
+            def date_range(fac):
+                return list(fac.reports.keys())
+            dates = list(map(date_range , data))
+            dates =  [item for sublist in dates for item in sublist]
+            dates = np.array(list(set(dates)))
+            months_to_screen = sorted(dates[(dates >= date_start) & (dates <= date_stop)])
+        screening_method = self.monitor
+        trigger_method = self.trigger_supervisions
+        self.implementation_simulation(screening_method , trigger_method , data , months_to_screen, **kwargs)
 
-
+## TODO When updating the training set, Need to assert it is not already up to date.
+## TODO When updating the training set, if there are missing periods, raise a warning
+## TODO Extract facility list and some characteristics at start when transversal = True
 
 ######
-def screen_function(data , mois , **kwargs):
-    perc_risk = kwargs['perc_risk']
-    data = get_payments(data)
-    table_1 = make_first_table(data)
-    ponderation = table_1['Volume Financier Récupéré'] / max(table_1['Volume Financier Récupéré'])
-    indicateurs_critiques = list(table_1[table_1['% Cumulé'] <= perc_risk].index)
-    if min(table_1['% Cumulé']) > perc_risk :
-        indicateurs_critiques = table_1.index[0]
-    if indicateurs_critiques == []:
-        pass
-    data = data.sort_index()
-    data_classif = data.loc[pd.IndexSlice[:,:,: ,indicateurs_critiques] , :]
-    try :
-        ecart_moyen_pondere = data_classif.groupby(level=1).apply(get_ecart_pondere , ponderation = ponderation)
-        ecart_moyen_pondere = classify_facilities(ecart_moyen_pondere)
-    except KeyError :
-        ecart_moyen_pondere = None
-    return {'description_parameters':ecart_moyen_pondere}
 
-def draw_supervision_months(description_parameters , **kwargs):
-    green_fac = description_parameters[description_parameters['Class'] == 'green']
-    orange_fac = description_parameters[description_parameters['Class'] == 'orange']
-
-    green_sample = list(green_fac.sample(frac = 0.2).index)
-    orange_sample = list(orange_fac.sample(frac = 0.8).index)
-    red_sample = list(description_parameters[description_parameters['Class'] == 'red'].index)
-
-    return green_sample + orange_sample + red_sample
-
-kwargs = {'perc_risk':.8}
-aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months , transversal = True ,
-validation_trail = True)
-aedes_algorithm.monitor(facilities  , mois = '2012-07'  , **kwargs)
-aedes_algorithm.trigger_supervisions()
-aedes_algorithm.return_parameters()
 
 ### FOR TESTING ONLY
 import pickle
@@ -139,6 +123,28 @@ pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
 
+def simulate_aedes(screening_method , trigger_method , data , dates , **kwargs):
+    for date in dates :
+        print(date)
+        month = date[5:7]
+        if month in ['01' , '07']:
+            print('Time to make a classification')
+            screening_method(data , mois = date , **kwargs)
+        aedes_algorithm.trigger_supervisions(date)
+        aedes_algorithm.return_parameters()
+
+kwargs = {'perc_risk':.8}
+aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months ,
+                                        implementation_simulation = simulate_aedes ,
+                                        transversal = True , validation_trail = True)
+
+aedes_algorithm.simulate_implementation('2013-01' , '2016-12', facilities , **kwargs)
+
+
+
+
+
+get_facility(facilities , 'Dedekpoe Csc').reports
 
 %matplotlib inline
 
@@ -162,3 +168,7 @@ for i in range(1,17):
     bar_cols(classes_counts.loc[departement])
     departement =departement.replace('’' , "'")
     plt.title(departement , fontsize=15)
+
+
+## TODO Store Report Data dans un dataFrame by facility
+## TODO Add an export and storage of the status in the facility object

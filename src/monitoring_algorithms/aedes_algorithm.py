@@ -105,3 +105,35 @@ def make_facilities_classification(data , ponderation , perc_risk):
         ecart_moyen_pondere = data_classif.groupby(['entity_name']).apply(get_ecart_pondere , ponderation = ponderation)
         ecart_moyen_pondere = classify_facilities(ecart_moyen_pondere)
         return ecart_moyen_pondere
+
+
+##
+
+def screen_function(data , mois , **kwargs):
+    perc_risk = kwargs['perc_risk']
+    data = get_payments(data)
+    table_1 = make_first_table(data)
+    ponderation = table_1['Volume Financier Récupéré'] / max(table_1['Volume Financier Récupéré'])
+    indicateurs_critiques = list(table_1[table_1['% Cumulé'] <= perc_risk].index)
+    if min(table_1['% Cumulé']) > perc_risk :
+        indicateurs_critiques = table_1.index[0]
+    if indicateurs_critiques == []:
+        pass
+    data = data.sort_index()
+    data_classif = data.loc[pd.IndexSlice[:,:,: ,indicateurs_critiques] , :]
+    try :
+        ecart_moyen_pondere = data_classif.groupby(level=1).apply(get_ecart_pondere , ponderation = ponderation)
+        ecart_moyen_pondere = classify_facilities(ecart_moyen_pondere)
+    except KeyError :
+        ecart_moyen_pondere = None
+    return {'description_parameters':ecart_moyen_pondere}
+
+def draw_supervision_months(description_parameters , **kwargs):
+    green_fac = description_parameters[description_parameters['Class'] == 'green']
+    orange_fac = description_parameters[description_parameters['Class'] == 'orange']
+
+    green_sample = list(green_fac.sample(frac = 0.2).index)
+    orange_sample = list(orange_fac.sample(frac = 0.8).index)
+    red_sample = list(description_parameters[description_parameters['Class'] == 'red'].index)
+
+    return green_sample + orange_sample + red_sample
