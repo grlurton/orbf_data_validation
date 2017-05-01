@@ -18,13 +18,15 @@ class monitoring_algorithm(object):
             assert type(self.facility_data) == list , "This algorithm takes a list of facilities"
             print('Computing a transversal training set')
             self.list_name_facilites= get_name_facilities_list(self.facility_data)
-            training_data = self.make_transversal_training_set(self.facility_data , mois)
+            self.training_data = self.make_transversal_training_set(self.facility_data , mois)
         if self.transversal == False :
             assert type(self.facility_data) == 'facility_monitoring.facility' , "This algorithm takes a facility as input"
-            training_data = self.make_training_set(self.facility_data , mois)
+            self.training_data = self.make_training_set(self.facility_data , mois)
         print('Screening the data')
-        screen_output = self.screen(training_data  , mois ,  **kwargs)
+        screen_output = self.screen(self.training_data  , mois ,  **kwargs)
+
         self.description_parameters = screen_output['description_parameters']
+
 
     def trigger_supervisions(self , mois , **kwargs):
         ## TODO Finalize triggering for the longitudinal case
@@ -45,7 +47,7 @@ class monitoring_algorithm(object):
                     fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([False] , index = [self.mois] , columns = [self.algorithm_name]))
                 self.facility_data[self.list_name_facilites.index(facility)] = fac_obj
 
-    def make_training_set(self , facility_data , mois) :
+    def make_training_set(self  , facility_data  , mois) :
         algorithm_name = self.algorithm_name
         facility_name = facility_data.facility_name
         departement = facility_data.departement
@@ -65,11 +67,12 @@ class monitoring_algorithm(object):
             verified_data =  pd.DataFrame([] , index = [])
             claimed_data =  pd.DataFrame([] , index = [])
             if (len(list(verified_months)) > 0) | (type(verified_months) == 'Period') :
-                verified_data = facility_data.reports.loc[list(verified_months) , ['indicator_claimed_value'  , 'indicator_verified_value' , 'indicator_tarif']]
-                verified_data.columns = ['indicator_claimed_value' ,'indicator_validated_value' , 'indicator_tarif']
+                try :
+                    verified_data = facility_data.reports.loc[list(verified_months) , ['indicator_claimed_value'  , 'indicator_verified_value' , 'indicator_tarif']]
+                    verified_data.columns = ['indicator_claimed_value' ,'indicator_validated_value' , 'indicator_tarif']
+                except KeyError :
+                    pass
             if len(list(unverified_months)) > 0 | (type(unverified_months) == 'Period') :
-                print(facility_name)
-                print(unverified_months)
                 try :
                     claimed_data = facility_data.reports.loc[list(unverified_months) , ['indicator_claimed_value'  , 'indicator_claimed_value' , 'indicator_tarif']]
                     claimed_data.columns = ['indicator_claimed_value' , 'indicator_validated_value' , 'indicator_tarif']
@@ -81,7 +84,10 @@ class monitoring_algorithm(object):
         validated_data['facility_name'] = facility_name
         validated_data['departement'] = departement
         if len(validated_data) > 0 :
-            validated_data = validated_data.reset_index().set_index(['departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['departement' , 'facility_name' , 'period' , 'indicator_label']).sort_index()
+            try :
+                validated_data = validated_data.reset_index().set_index(['departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['departement' , 'facility_name' , 'period' , 'indicator_label']).sort_index()
+            except KeyError :
+                pass
             return validated_data
 
     def make_transversal_training_set(self , data , mois):
@@ -102,11 +108,14 @@ class monitoring_algorithm(object):
             months_to_screen = sorted(dates[(dates >= date_start) & (dates <= date_stop)])
         screening_method = self.monitor
         trigger_method = self.trigger_supervisions
-        self.implementation_simulation(screening_method , trigger_method , data , months_to_screen, **kwargs)
+        self.implementation_simulation(self.monitor , self.trigger_supervisions ,  self.return_parameters , data , months_to_screen, **kwargs)
+
 
 ## TODO When updating the training set, Need to assert it is not already up to date.
-## TODO When updating the training set, if there are missing periods, raise a warning
+## TODO When updating the training set, if there are missing periods, raise a warning => for now, try except
 ## TODO Extract facility list and some characteristics at start when transversal = True
+## TODO les routines de description se font a partir des facility objects
+
 
 ######
 
@@ -120,24 +129,23 @@ pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
 
-def simulate_aedes(screening_method , trigger_method , data , dates , **kwargs):
+def simulate_aedes(screening_method , trigger_supervisions , return_parameters , data , dates , **kwargs):
     for date in dates :
         print(date)
         month = date.month
         if month in [1 ,7]:
             print('Time to make a classification')
             screening_method(data , mois = date , **kwargs)
-        aedes_algorithm.trigger_supervisions(date)
-        aedes_algorithm.return_parameters()
+        trigger_supervisions(date)
+        return_parameters()
 
 kwargs = {'perc_risk':.8}
 aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months ,
                                         implementation_simulation = simulate_aedes ,
                                         transversal = True , validation_trail = True)
 
-aedes_algorithm.simulate_implementation('2013-01' , '2016-12', facilities , **kwargs)
-
-aedes_algorithm.list_name_facilites
+%%time
+aedes_algorithm.simulate_implementation('2012-07' , '2016-12', facilities , **kwargs)
 
 %matplotlib inline
 
