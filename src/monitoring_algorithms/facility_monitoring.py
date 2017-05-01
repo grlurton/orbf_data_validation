@@ -83,7 +83,6 @@ class facility(object):
         plt.show()
 
 
-## IDEA Store date of first report for easy subsetting
 ## IDEA Would like to store an overall description of each facility for query + some aggregation routines
 ## TODO Generic descriptives :
 ## * Evolution of economies from this approach, in time

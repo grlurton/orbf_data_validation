@@ -1,3 +1,6 @@
+from generic_functions import *
+import pandas as pd
+
 class monitoring_algorithm(object):
     """ Monitoring Algorithm objects
 
@@ -163,32 +166,7 @@ class monitoring_algorithm(object):
 ######
 
 
-### FOR TESTING ONLY
-import pickle
-from generic_functions import *
-from aedes_algorithm import *
-from generic_functions import *
-pkl_file = open('../../data/processed/facilities.pkl', 'rb')
-facilities = pickle.load(pkl_file)
-pkl_file.close()
-
-def simulate_aedes(screening_method , trigger_supervisions , return_parameters , data , dates , **kwargs):
-    for date in dates :
-        month = date.month
-        if month in [1 ,7]:
-            screening_method(data , mois = date , **kwargs)
-        trigger_supervisions(date)
-        return_parameters()
-
-kwargs = {'perc_risk':.8}
-aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months ,
-                                        implementation_simulation = simulate_aedes ,
-                                        transversal = True , validation_trail = True)
-
-%%time
-aedes_algorithm.simulate_implementation('2012-07' , '2016-12', facilities , **kwargs)
-
-%matplotlib inline
+#%matplotlib inline
 
 def bar_cols(col_data , order_cols = ['green' , 'orange' , 'red']):
     o = []
@@ -202,11 +180,11 @@ def bar_cols(col_data , order_cols = ['green' , 'orange' , 'red']):
     plt.bar([0,1,2], o , color = order_cols)
     plt.xticks([0,1,2] , order_cols)
 
-classes_counts = u.groupby(level = 0).Class.value_counts()
-fig=plt.figure(figsize=(18, 16) , dpi= 80, facecolor='w', edgecolor='k')
-for i in range(1,17):
-    plt.subplot(4,4,i)
-    departement = list(classes_counts.index.levels[0])[i-1]
-    bar_cols(classes_counts.loc[departement])
-    departement =departement.replace('’' , "'")
-    plt.title(departement , fontsize=15)
+#classes_counts = u.groupby(level = 0).Class.value_counts()
+#fig=plt.figure(figsize=(18, 16) , dpi= 80, facecolor='w', edgecolor='k')
+#for i in range(1,17):
+#    plt.subplot(4,4,i)
+#    departement = list(classes_counts.index.levels[0])[i-1]
+#    bar_cols(classes_counts.loc[departement])
+#    departement =departement.replace('’' , "'")
+#    plt.title(departement , fontsize=15)

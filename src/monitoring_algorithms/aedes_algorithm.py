@@ -1,3 +1,7 @@
+from generic_functions import *
+import pandas as pd
+import numpy as np
+
 bm_zones =['OUIDAH-KPOMASSE-TORI-BOSSITO', 'BANIKOARA', 'LOKOSSA-ATHIEME' , 'ADJOHOUN-BONOU-DANGBO' ,
            'KOUANDE-OUASSA-PEHUNCO-KEROU','COVE-ZANGNANADO-OUINHI', 'PORTONOVO-AGUEGUES-SEME-PODJI',
            'BOHICON-ZAKPOTA-ZOGBODOMEY']

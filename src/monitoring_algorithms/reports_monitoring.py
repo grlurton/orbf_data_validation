@@ -50,6 +50,3 @@ class report(object):
             expected_payment = 1
         alarm = (claimed_payment - expected_payment > mean_supervision_cost) | (claimed_payment / expected_payment  < underfunding_max_risk)
         self.alarm = alarm
-
-## TODO Add the alarms as different types, for later averaging
-## TODO Move ARIMA to reports or even series monitoring

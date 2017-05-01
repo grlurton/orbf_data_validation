@@ -7,10 +7,14 @@ import numpy as np
 import ipyparallel
 import subprocess
 import pickle
+import pandas as pd
+
 start_cluster_command = 'ipcluster start -n 4'
 subprocess.Popen(start_cluster_command)
 
+#from generic_functions import *
 from aedes_algorithm import *
+from algorithms_definition import *
 
 
 print('Starting Cluster')
@@ -25,14 +29,28 @@ for i in range(0,100):
         break
 
 print('Loading Data')
-import pandas as pd
-
 pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
+
 store = pd.HDFStore('../../data/processed/orbf_benin.h5')
 tarifs = store['tarifs']
 store.close()
+
+### Run Aedes Algorithm
+kwargs = {'perc_risk':.8}
+aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months ,
+                                        implementation_simulation = simulate_aedes ,
+                                        transversal = True , validation_trail = True)
+
+%%time
+aedes_algorithm.simulate_implementation('2012-07' , '2016-12', facilities , **kwargs)
+out = open('../../data/processed/TEMP_facilities_aedes.pkl' , 'wb')
+pickle.dump(facilities , out , pickle.HIGHEST_PROTOCOL)
+out.close()
+
+
+
 
 
 ## Making parameters
@@ -54,39 +72,3 @@ subprocess.Popen('ipcluster stop')
 out = open('../../data/processed/facilities_supervision_trails.pkl' , 'wb')
 pickle.dump(result, out , pickle.HIGHEST_PROTOCOL)
 out.close()
-
-mois = '2012-07'
-
-def get_training_set(data , mois = '2012-07') :
-    data.initiate_training_set(mois)
-    facility_name = data.facility_name
-    ts= data.training_set
-    dat = []
-    for indic in ts.keys() :
-        data_indic = {'facility_name':facility_name ,
-                        'indicator_label':indic ,
-                        'date':list(ts[indic].index) ,
-                        'values':list(ts[indic])}
-
-
-        add = pd.DataFrame(data_indic)
-        if len(dat) > 0 :
-            dat = dat.append(add)
-        if len(dat) == 0 :
-            dat = add
-    dat = dat.set_index(['facility_name' , 'indicator_label' , 'date'])
-    return dat
-    #return pd.DataFrame(ts , index = [fac_id])
-
-len(u)
-
-
-
-#def run_aedes(month):
-#    if month.dt.month.isin([1 , 6 ]):
-#        print('Nouvelle Classification !')
-#        classification_data = 
-        ### Faire La classification
-    ### Faire tirage en janvier
-    ### Update Training set
-    ### Update date supervision
