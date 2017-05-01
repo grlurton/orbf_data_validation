@@ -1,6 +1,6 @@
 class monitoring_algorithm(object):
     def __init__(self  , algorithm_name , screening_method , alert_trigger  , implementation_simulation = None ,
-                    transversal = False , validation_trail = True) :
+                    transversal = False , validation_trail = True , verbose = False) :
         self.algorithm_name = algorithm_name
         self.transversal = transversal
         self.validation_trail = validation_trail
@@ -8,6 +8,7 @@ class monitoring_algorithm(object):
         self.alert_trigger = alert_trigger
         self.validation_trail = validation_trail
         self.implementation_simulation = implementation_simulation
+        self.verbose = verbose
 
     def monitor(self , facility_data , mois , **kwargs):
         if self.transversal == True :
@@ -16,13 +17,15 @@ class monitoring_algorithm(object):
         self.facility_data = facility_data
         if self.transversal == True :
             assert type(self.facility_data) == list , "This algorithm takes a list of facilities"
-            print('Computing a transversal training set')
+            if self.verbose == True :
+                print('Computing a transversal training set')
             self.list_name_facilites= get_name_facilities_list(self.facility_data)
             self.training_data = self.make_transversal_training_set(self.facility_data , mois)
         if self.transversal == False :
             assert type(self.facility_data) == 'facility_monitoring.facility' , "This algorithm takes a facility as input"
             self.training_data = self.make_training_set(self.facility_data , mois)
-        print('Screening the data')
+        if self.verbose == True :
+            print('Screening the data')
         screen_output = self.screen(self.training_data  , mois ,  **kwargs)
 
         self.description_parameters = screen_output['description_parameters']
@@ -131,10 +134,8 @@ pkl_file.close()
 
 def simulate_aedes(screening_method , trigger_supervisions , return_parameters , data , dates , **kwargs):
     for date in dates :
-        print(date)
         month = date.month
         if month in [1 ,7]:
-            print('Time to make a classification')
             screening_method(data , mois = date , **kwargs)
         trigger_supervisions(date)
         return_parameters()
@@ -169,5 +170,3 @@ for i in range(1,17):
     bar_cols(classes_counts.loc[departement])
     departement =departement.replace('’' , "'")
     plt.title(departement , fontsize=15)
-
-## TODO Add an export and storage of the status in the facility object => screening_trace
