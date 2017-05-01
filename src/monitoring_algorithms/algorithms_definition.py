@@ -1,10 +1,52 @@
 class monitoring_algorithm(object):
+    """ Monitoring Algorithm objects
+
+    Monitoring algorithms are the combination of three sub-algorithms :
+    1. A Screening algorithm, that processes the available data and outputs description parameters of this data.
+    2. A Triggering algorithm that analyses the description parameters and returns a binary decision, regarding the necessity to go verify the data in reported in a given reported.
+    3. A Supervision algorithm, that describes the concrete implementation of the monitoring in the field.
+
+    The combination of these three elements uniquely define a monitoring strategy for a program. At each steps, the facility objects are updated to include the values of the supervision paraemters, and the result of the trigger algorithm.
+
+    The Screening algorithms input can be classified along two dimentsions :
+    1. Longitudinal vs Transversal :
+        * Longitudinal data : Using only one facility, the algorithm considers the past validated values and infers the characteristics of the next expected values.
+        * Transversal data : Using a group of facilities, the algorithm compares the different facilities performances and their values.
+    2. Simple reports vs Validation trail :
+        * Simple reports : The algorithm uses only the values previously validated in the facilities.
+        * Validation trails : The algorithm uses both the reported values and the validated values.
+
+    We need to specify these two dimensions when initiating the algorithm object, to orient the pre-processing of the data. The inputed data is then processed to form an appropriate training set that can be fed in the Screening algorithm.
+
+
+
+    Parameters
+    -------------
+    algorithm_name : string
+        The name of the algorithm, to identify the output in the facility objects
+    screening_method : function
+        The Screening algorithm. More description on its characteristics in the function.
+    alert_trigger : function
+        The Triggering algorithm. More description on its characteristics in the function.
+    implementation_simulation : function
+        The Supervision algorithm. More description on its characteristics in the function.
+    transversal : boolean
+        True if the data is transveral, False if it is longitudinal.
+        False by default.
+    validation_trail : boolean
+        True if the screening method uses a validation trail as input, False if it uses simple reports.
+        False by default.
+    verbose : boolean
+        True if the user wants to have some monitoring prints in different parts of the functions.
+
+
+    """
     def __init__(self  , algorithm_name , screening_method , alert_trigger  , implementation_simulation = None ,
                     transversal = False , validation_trail = True , verbose = False) :
         self.algorithm_name = algorithm_name
         self.transversal = transversal
         self.validation_trail = validation_trail
-        self.screen = screening_method
+        self.screening_method = screening_method
         self.alert_trigger = alert_trigger
         self.validation_trail = validation_trail
         self.implementation_simulation = implementation_simulation
@@ -26,7 +68,7 @@ class monitoring_algorithm(object):
             self.training_data = self.make_training_set(self.facility_data , mois)
         if self.verbose == True :
             print('Screening the data')
-        screen_output = self.screen(self.training_data  , mois ,  **kwargs)
+        screen_output = self.screening_method(self.training_data  , mois ,  **kwargs)
 
         self.description_parameters = screen_output['description_parameters']
 
@@ -38,7 +80,6 @@ class monitoring_algorithm(object):
         self.supervision_list = alert
 
     def return_parameters(self):
-
         if self.transversal == False :
             self.facility_data.description_parameters = self.description_parameters
         if self.transversal == True :
@@ -116,7 +157,6 @@ class monitoring_algorithm(object):
 
 ## TODO When updating the training set, Need to assert it is not already up to date.
 ## TODO When updating the training set, if there are missing periods, raise a warning => for now, try except
-## TODO Extract facility list and some characteristics at start when transversal = True
 ## TODO les routines de description se font a partir des facility objects
 
 
