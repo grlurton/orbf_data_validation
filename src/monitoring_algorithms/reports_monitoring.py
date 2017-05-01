@@ -43,21 +43,6 @@ class report(object):
         self.report_data = self.report_data.set_index('indicator_label')
         self.report_payment = self.compute_report_payment(tarifs)
 
-    def compute_report_payment(self , tarifs):
-        """ Reports Summaries
-
-        Computes the reports claimed and verified payments
-
-        Returns
-        -------
-        report_payments : Dictionnary
-            The payment for the report. Contains both the claimed payment and the verified payment.
-        """
-        claimed_payment = np.nansum(self.report_data.indicator_claimed_value * tarifs)
-        verified_payment = np.nansum(self.report_data.indicator_verified_value * tarifs)
-        report_payments = {'claimed_payment': claimed_payment, 'verified_payment': verified_payment}
-        return report_payments
-
     def overcost_alarm(self , expected_report , tarifs , mean_supervision_cost, underfunding_max_risk):
         claimed_payment = self.report_payment['claimed_payment']
         expected_payment = np.nansum(expected_report.expected_values * tarifs)
