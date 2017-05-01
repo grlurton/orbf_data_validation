@@ -11,6 +11,7 @@ def get_payments(data):
     data['claimed_payment'] = list(data.indicator_claimed_value * data['indicator_tarif'])
     data['verified_payment'] = list(data.indicator_validated_value * data['indicator_tarif'])
     return data
+## FIXME 'verified_payment' should be 'validated_payment'. Check where this is used eleswhere.
 
 def get_facilities_name(facility):
     return facility.facility_name
