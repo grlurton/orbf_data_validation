@@ -161,30 +161,3 @@ class monitoring_algorithm(object):
 ## TODO When updating the training set, Need to assert it is not already up to date.
 ## TODO When updating the training set, if there are missing periods, raise a warning => for now, try except
 ## TODO les routines de description se font a partir des facility objects
-
-
-######
-
-
-#%matplotlib inline
-
-def bar_cols(col_data , order_cols = ['green' , 'orange' , 'red']):
-    o = []
-    for col in order_cols:
-        try :
-            n = col_data.loc[col]
-            o.append(n)
-        except KeyError :
-            o.append(0)
-
-    plt.bar([0,1,2], o , color = order_cols)
-    plt.xticks([0,1,2] , order_cols)
-
-#classes_counts = u.groupby(level = 0).Class.value_counts()
-#fig=plt.figure(figsize=(18, 16) , dpi= 80, facecolor='w', edgecolor='k')
-#for i in range(1,17):
-#    plt.subplot(4,4,i)
-#    departement = list(classes_counts.index.levels[0])[i-1]
-#    bar_cols(classes_counts.loc[departement])
-#    departement =departement.replace('’' , "'")
-#    plt.title(departement , fontsize=15)
