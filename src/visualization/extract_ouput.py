@@ -46,20 +46,27 @@ def get_verification_path(facility_data , algorithm_name):
         supervisions.index = pd.DataFrame(supervisions).index.rename('period')
         supervisions.columns = ['trigger']
         supervisions['algorithm'] = algorithm_name
-        validated_data = pd.merge(validated_data , supervisions , left_index = True , right_index = True)
+        try :
+            validated_data = pd.merge(validated_data , supervisions , left_index = True , right_index = True)
 
-        if len(validated_data) > 0 :
-            try :
-                validated_data = validated_data.reset_index().set_index(['algorithm' , 'departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['algorithm' , 'departement' , 'facility_name' ,  'period' , 'indicator_label']).sort_index()
-            except KeyError :
-                pass
+            if len(validated_data) > 0 :
+                try :
+                    validated_data = validated_data.reset_index().set_index(['algorithm' , 'departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['algorithm' , 'departement' , 'facility_name' ,  'period' , 'indicator_label']).sort_index()
+                except KeyError :
+                    pass
+            return validated_data
+        except :
+            pass
 
+## FIXME Drop altogteher facilities for which at which one algorithm does not come through. 
 
+def valid_param(fac):
+    return get_verification_path(fac , 'aedes')
+validation_path = list(map(valid_param , facilities))
 
-    return validated_data
+len(validation_path)
 
-
-validation_path = get_verification_path(fac , 'aedes' )
+every = validation_path[0].append(validation_path[1:len(validation_path)])
 
 ## TODO groupby this so it can extract different algorithms pathes
 
@@ -71,17 +78,22 @@ def get_interesting_quantities(validated_path):
     validated_path['undue_payment_made'] = validated_path['validated_payment'] - validated_path['verified_payment']
     return validated_path
 
-with_iq = get_interesting_quantities(validation_path)
 
+with_iq = get_interesting_quantities(every)
 
 ######
 
 import matplotlib.pyplot as plt
 
 
+
+
 %matplotlib inline
 
-undue_payment_made = with_iq.undue_payment_made.groupby(level = [0 , 3]).sum()
+undue_payment_made = with_iq.validated_payment.groupby(level = [0 , 3]).sum()
+
+undue_payment_made  = undue_payment_made[undue_payment_made < 1.e8]
+
 undue_payment_made.plot()
 
 
