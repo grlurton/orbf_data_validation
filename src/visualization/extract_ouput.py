@@ -10,9 +10,6 @@ pkl_file = open( '../../data/processed/TEMP_facilities_aedes.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
 
-
-fac = facilities[0]
-
 def get_verification_path(facility_data , algorithm_name):
     supervisions = facility_data.supervisions.copy()
     facility_name = facility_data.facility_name
@@ -45,10 +42,12 @@ def get_verification_path(facility_data , algorithm_name):
 
         supervisions.index = pd.DataFrame(supervisions).index.rename('period')
         supervisions.columns = ['trigger']
+        print(supervisions.trigger.value_counts())
         supervisions['algorithm'] = algorithm_name
         try :
             validated_data = pd.merge(validated_data , supervisions , left_index = True , right_index = True)
-
+            print(validated_data.trigger.value_counts())
+            return validated_data
             if len(validated_data) > 0 :
                 try :
                     validated_data = validated_data.reset_index().set_index(['algorithm' , 'departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['algorithm' , 'departement' , 'facility_name' ,  'period' , 'indicator_label']).sort_index()
@@ -58,17 +57,24 @@ def get_verification_path(facility_data , algorithm_name):
         except :
             pass
 
-## FIXME Drop altogteher facilities for which at which one algorithm does not come through. 
+## FIXME Drop altogteher facilities for which at which one algorithm does not come through.
+## TODO groupby this so it can extract different algorithms pathes
+## TODO Need to add a default full supervision path
 
 def valid_param(fac):
     return get_verification_path(fac , 'aedes')
 validation_path = list(map(valid_param , facilities))
+full_data = validation_path[0].append(validation_path[1:len(validation_path)])
+full_data.to_hdf('../../data/processed/aedes_full_df.h5' , 'data')
 
-len(validation_path)
 
-every = validation_path[0].append(validation_path[1:len(validation_path)])
 
-## TODO groupby this so it can extract different algorithms pathes
+
+## Additional function for interesting parameters
+def count_supervisions(validated_path):
+    supervisions = validated_path.trigger.isin([True , 'Initial Training'])
+    n_supervisions = supervisions.reset_index()['facility_name'].nunique()
+    return n_supervisions
 
 def get_interesting_quantities(validated_path):
     validated_path['claimed_payment'] = validated_path['indicator_claimed_value'] * validated_path['indicator_tarif']
@@ -78,26 +84,24 @@ def get_interesting_quantities(validated_path):
     validated_path['undue_payment_made'] = validated_path['validated_payment'] - validated_path['verified_payment']
     return validated_path
 
-
+supervision_costs = full_data.groupby(level = [0 , 3]).apply(make_supervision_cost , 12223)
 with_iq = get_interesting_quantities(every)
 
+
+
+monthly_verifications = full_data.groupby(level = 3).apply(count_supervisions)
+
 ######
-
 import matplotlib.pyplot as plt
-
-
-
 
 %matplotlib inline
 
 undue_payment_made = with_iq.validated_payment.groupby(level = [0 , 3]).sum()
-
-undue_payment_made  = undue_payment_made[undue_payment_made < 1.e8]
-
-undue_payment_made.plot()
-
-
-
+total_payment = undue_payment_made + supervision_costs
+total_payment  = total_payment[total_payment < 1e9]
+list(sorted(total_payment.index.levels[1]))
+share_supervision_cost = supervision_costs / total_payment
+share_supervision_cost.plot()
 
 
 plt.plot(a.indicator_claimed_value , a.indicator_validated_value , 'o')
