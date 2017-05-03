@@ -42,12 +42,9 @@ def get_verification_path(facility_data , algorithm_name):
 
         supervisions.index = pd.DataFrame(supervisions).index.rename('period')
         supervisions.columns = ['trigger']
-        print(supervisions.trigger.value_counts())
         supervisions['algorithm'] = algorithm_name
         try :
             validated_data = pd.merge(validated_data , supervisions , left_index = True , right_index = True)
-            print(validated_data.trigger.value_counts())
-            return validated_data
             if len(validated_data) > 0 :
                 try :
                     validated_data = validated_data.reset_index().set_index(['algorithm' , 'departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['algorithm' , 'departement' , 'facility_name' ,  'period' , 'indicator_label']).sort_index()
@@ -64,15 +61,19 @@ def get_verification_path(facility_data , algorithm_name):
 def valid_param(fac):
     return get_verification_path(fac , 'aedes')
 validation_path = list(map(valid_param , facilities))
+
 full_data = validation_path[0].append(validation_path[1:len(validation_path)])
-full_data.to_hdf('../../data/processed/aedes_full_df.h5' , 'data')
+
+out = open('../../data/processed/TEMP_aedes_fulldata.pkl' , 'wb')
+pickle.dump(full_data , out , pickle.HIGHEST_PROTOCOL)
+out.close()
 
 
 
 
 ## Additional function for interesting parameters
 def count_supervisions(validated_path):
-    supervisions = validated_path.trigger.isin([True , 'Initial Training'])
+    supervisions = validated_path[validated_path.trigger.isin([True , 'Initial Training'])]
     n_supervisions = supervisions.reset_index()['facility_name'].nunique()
     return n_supervisions
 
@@ -84,9 +85,17 @@ def get_interesting_quantities(validated_path):
     validated_path['undue_payment_made'] = validated_path['validated_payment'] - validated_path['verified_payment']
     return validated_path
 
-supervision_costs = full_data.groupby(level = [0 , 3]).apply(make_supervision_cost , 12223)
+count_supervisions(full_data)
+
+supervision_costs = full_data.groupby(level = [0 , 3]).apply(count_supervisions)
 with_iq = get_interesting_quantities(every)
 
+def ttt(data) :
+    return data.reset_index()['facility']
+
+facilities[660].facility_name
+facilities[660].departement
+facilities[660].supervisions
 
 
 monthly_verifications = full_data.groupby(level = 3).apply(count_supervisions)
@@ -102,31 +111,3 @@ total_payment  = total_payment[total_payment < 1e9]
 list(sorted(total_payment.index.levels[1]))
 share_supervision_cost = supervision_costs / total_payment
 share_supervision_cost.plot()
-
-
-plt.plot(a.indicator_claimed_value , a.indicator_validated_value , 'o')
-
-
-
-
-
-def bar_cols(col_data , order_cols = ['green' , 'orange' , 'red']):
-    o = []
-    for col in order_cols:
-        try :
-            n = col_data.loc[col]
-            o.append(n)
-        except KeyError :
-            o.append(0)
-
-    plt.bar([0,1,2], o , color = order_cols)
-    plt.xticks([0,1,2] , order_cols)
-
-#classes_counts = u.groupby(level = 0).Class.value_counts()
-#fig=plt.figure(figsize=(18, 16) , dpi= 80, facecolor='w', edgecolor='k')
-#for i in range(1,17):
-#    plt.subplot(4,4,i)
-#    departement = list(classes_counts.index.levels[0])[i-1]
-#    bar_cols(classes_counts.loc[departement])
-#    departement =departement.replace('’' , "'")
-#    plt.title(departement , fontsize=15)
