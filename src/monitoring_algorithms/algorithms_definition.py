@@ -57,14 +57,13 @@ class monitoring_algorithm(object):
 
     def monitor(self , facility_data , mois , **kwargs):
         if self.transversal == True :
-            self.list_facilities_name = get_name_facilities_list(facility_data)
-        self.mois = mois
+            self.list_facilities_name = get_name_facilities_list(facility_data , mois)
         self.facility_data = facility_data
         if self.transversal == True :
             assert type(self.facility_data) == list , "This algorithm takes a list of facilities"
             if self.verbose == True :
                 print('Computing a transversal training set')
-            self.list_name_facilites= get_name_facilities_list(self.facility_data)
+            self.list_name_facilites=  get_name_facilities_list(facility_data , mois)
             self.training_data = self.make_transversal_training_set(self.facility_data , mois)
         if self.transversal == False :
             assert type(self.facility_data) == 'facility_monitoring.facility' , "This algorithm takes a facility as input"
@@ -78,6 +77,7 @@ class monitoring_algorithm(object):
 
     def trigger_supervisions(self , mois , **kwargs):
         ## TODO Finalize triggering for the longitudinal case
+        print(mois)
         self.mois = mois
         alert = self.alert_trigger(self.description_parameters , **kwargs)
         self.supervision_list = alert
@@ -86,13 +86,18 @@ class monitoring_algorithm(object):
         if self.transversal == False :
             self.facility_data.description_parameters = self.description_parameters
         if self.transversal == True :
-            for facility in self.list_name_facilites :
-                fac_obj = get_facility(self.facility_data , facility)
-                if facility in self.supervision_list :
-                    fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.algorithm_name]))
-                if facility not in self.supervision_list :
-                    fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([False] , index = [self.mois] , columns = [self.algorithm_name]))
-                self.facility_data[self.list_name_facilites.index(facility)] = fac_obj
+            for facility in self.list_facilities_name :
+                try :
+                    fac_obj = get_facility(self.facility_data , facility)
+                    if (facility in self.supervision_list) :
+                        fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.algorithm_name]))
+                    if (facility not in self.supervision_list) & (facility in self.training_data.index.levels[1]) :
+                        fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([False] , index = [self.mois] , columns = [self.algorithm_name]))
+                    if (facility not in self.supervision_list) & (facility not in self.training_data.index.levels[1]) :
+                        fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame(['Initial Training' ] , index = [self.mois] , columns = [self.algorithm_name]))
+                    self.facility_data[self.list_name_facilites.index(facility)] = fac_obj
+                except ValueError :
+                    pass ## eg : Akadja Mi seems to be out...
 
     def make_training_set(self  , facility_data  , mois) :
         algorithm_name = self.algorithm_name
@@ -100,46 +105,49 @@ class monitoring_algorithm(object):
         departement = facility_data.departement
         supervisions = facility_data.supervisions
         reports_months = facility_data.reports.index.levels[0]
-        training_months = reports_months[reports_months < mois]
-        if algorithm_name not in list(supervisions.columns) :
-            supervisions = supervisions.append(pd.DataFrame(['Initial Training']*len(training_months) , index = training_months , columns = [algorithm_name]))
-            if self.transversal == False :
-                self.facility_data.supervisions = supervisions
-            if self.transversal == True :
-                index_fac = self.list_name_facilites.index(facility_name)
-                self.facility_data[index_fac].supervisions = supervisions
-        if (algorithm_name in list(supervisions.columns)) :
-            verified_months =  supervisions.index[supervisions[algorithm_name].isin([True , 'Initial Training'])]
-            unverified_months = supervisions.index[supervisions[algorithm_name] == False]
-            verified_data =  pd.DataFrame([] , index = [])
-            claimed_data =  pd.DataFrame([] , index = [])
-            if (len(list(verified_months)) > 0) | (type(verified_months) == 'Period') :
-                try :
-                    verified_data = facility_data.reports.loc[list(verified_months) , ['indicator_claimed_value'  , 'indicator_verified_value' , 'indicator_tarif']]
-                    verified_data.columns = ['indicator_claimed_value' ,'indicator_validated_value' , 'indicator_tarif']
-                except KeyError :
-                    pass
-            if len(list(unverified_months)) > 0 | (type(unverified_months) == 'Period') :
-                try :
-                    claimed_data = facility_data.reports.loc[list(unverified_months) , ['indicator_claimed_value'  , 'indicator_claimed_value' , 'indicator_tarif']]
-                    claimed_data.columns = ['indicator_claimed_value' , 'indicator_validated_value' , 'indicator_tarif']
+        training_months = reports_months[reports_months < mois].unique()
+        if len(training_months) > 0 :
+            if (algorithm_name not in list(supervisions.columns)) :
+                supervisions = pd.DataFrame(['Initial Training']*len(training_months) , index = training_months , columns = [algorithm_name])
+                if self.transversal == False :
+                    self.facility_data.supervisions = self.facility_data.supervisions.append(supervisions)
+                if self.transversal == True :
+                    index_fac = self.list_name_facilites.index(facility_name)
+                    self.facility_data[index_fac].supervisions = self.facility_data[index_fac].supervisions.append(supervisions)
+            if (algorithm_name in list(supervisions.columns)):
+                verified_months =  supervisions.index[supervisions[algorithm_name].isin([True , 'Initial Training'])]
+                unverified_months = supervisions.index[supervisions[algorithm_name] == False]
+                verified_data =  pd.DataFrame([] , index = [])
+                claimed_data =  pd.DataFrame([] , index = [])
+                if (len(list(verified_months)) > 0) | (type(verified_months) == 'Period') :
+                    try :
+                        verified_data = facility_data.reports.loc[list(verified_months) , ['indicator_claimed_value'  , 'indicator_verified_value' , 'indicator_tarif']]
+                        verified_data.columns = ['indicator_claimed_value' ,'indicator_validated_value' , 'indicator_tarif']
+                    except KeyError :
+                        pass
+                if len(list(unverified_months)) > 0 | (type(unverified_months) == 'Period') :
+                    try :
+                        claimed_data = facility_data.reports.loc[list(unverified_months) , ['indicator_claimed_value'  , 'indicator_claimed_value' , 'indicator_tarif']]
+                        claimed_data.columns = ['indicator_claimed_value' , 'indicator_validated_value' , 'indicator_tarif']
 
-                except( KeyError , TypeError ):
-                    pass
+                    except( KeyError , TypeError ):
+                        pass
 
-        validated_data = verified_data.append(claimed_data)
-        validated_data['facility_name'] = facility_name
-        validated_data['departement'] = departement
-        if len(validated_data) > 0 :
-            try :
-                validated_data = validated_data.reset_index().set_index(['departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['departement' , 'facility_name' , 'period' , 'indicator_label']).sort_index()
-            except KeyError :
-                pass
+                validated_data = verified_data.append(claimed_data)
+                validated_data['facility_name'] = facility_name
+                validated_data['departement'] = departement
+                if len(validated_data) > 0 :
+                    try :
+                        validated_data = validated_data.reset_index().set_index(['departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['departement' , 'facility_name' , 'period' , 'indicator_label']).sort_index()
+                    except KeyError :
+                        pass
             return validated_data
 
     def make_transversal_training_set(self , data , mois):
         def get_training_set(facility_data , mois = mois):
             return self.make_training_set(facility_data , mois)
+        to_include = get_name_facilities_list(data , mois )
+        data = [get_facility(data , x)  for x in to_include]
         transversal_training_set = list(map(get_training_set , data))
         transversal_training_set = pd.concat(transversal_training_set)
         return transversal_training_set
@@ -153,8 +161,6 @@ class monitoring_algorithm(object):
             for n in range(1,len(full_dates)):
                 dates.union(full_dates[n])
             months_to_screen = sorted(dates[(dates >= date_start) & (dates <= date_stop)])
-        screening_method = self.monitor
-        trigger_method = self.trigger_supervisions
         self.implementation_simulation(self.monitor , self.trigger_supervisions ,  self.return_parameters , data , months_to_screen, **kwargs)
 
 

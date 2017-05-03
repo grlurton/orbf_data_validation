@@ -33,25 +33,17 @@ pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
 
-store = pd.HDFStore('../../data/processed/orbf_benin.h5')
-tarifs = store['tarifs']
-store.close()
-
 ### Run Aedes Algorithm
 kwargs = {'perc_risk':.8}
 aedes_algorithm = monitoring_algorithm('aedes' , screen_function , draw_supervision_months ,
                                         implementation_simulation = simulate_aedes ,
                                         transversal = True , validation_trail = True)
 
-%%time
 aedes_algorithm.simulate_implementation('2012-07' , '2016-12', facilities , **kwargs)
+
 out = open('../../data/processed/TEMP_facilities_aedes.pkl' , 'wb')
 pickle.dump(facilities , out , pickle.HIGHEST_PROTOCOL)
 out.close()
-
-
-
-
 
 ## Making parameters
 mean_supervision_cost = 170000

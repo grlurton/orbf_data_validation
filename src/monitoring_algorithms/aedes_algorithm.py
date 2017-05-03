@@ -42,18 +42,6 @@ def get_ecart_pondere(data , ponderation):
     out = out.append(pd.Series([revenu] , index = ['Montant']))
     return out
 
-
-def make_cadran(ecart_moyen_pondere):
-    q4_rev = ecart_moyen_pondere['Montant'].quantile(0.4)
-    max_em = max(ecart_moyen_pondere['Ecart Moyen Pondéré'])
-    max_rev = max(ecart_moyen_pondere['Montant'])
-    min_em = min(ecart_moyen_pondere['Ecart Moyen Pondéré'])
-    plt.fill_between(np.array([0,q4_rev]) , np.array([max_em,max_em]) , facecolor='orange')
-    plt.fill_between(np.array([q4_rev, max_rev]) , np.array([max_em,max_em]) , facecolor='red')
-    plt.fill_between(np.array([0,q4_rev]) , np.array([min_em,min_em]), np.array([.1,.1]) , facecolor='green')
-    plt.fill_between(np.array([q4_rev, max_rev]) ,np.array([min_em,min_em]),np.array([.1,.1]) , facecolor='orange')
-    plt.plot(list(ecart_moyen_pondere['Montant']) , list(ecart_moyen_pondere['Ecart Moyen Pondéré']) , 'ok')
-
 def classify_facilities(ecart_moyen_pondere):
     q4_rev = ecart_moyen_pondere['Montant'].quantile(0.4)
     ecart_moyen_pondere['Class'] = 'red'
@@ -120,3 +108,26 @@ def simulate_aedes(screening_method , trigger_supervisions , return_parameters ,
             screening_method(data , mois = date , **kwargs)
         trigger_supervisions(date)
         return_parameters()
+
+#### Keep all training data
+#### Keep count of simulation months
+#### Store description_parameters also
+
+
+
+
+
+
+
+
+
+def make_cadran(ecart_moyen_pondere):
+    q4_rev = ecart_moyen_pondere['Montant'].quantile(0.4)
+    max_em = max(ecart_moyen_pondere['Ecart Moyen Pondéré'])
+    max_rev = max(ecart_moyen_pondere['Montant'])
+    min_em = min(ecart_moyen_pondere['Ecart Moyen Pondéré'])
+    plt.fill_between(np.array([0,q4_rev]) , np.array([max_em,max_em]) , facecolor='orange')
+    plt.fill_between(np.array([q4_rev, max_rev]) , np.array([max_em,max_em]) , facecolor='red')
+    plt.fill_between(np.array([0,q4_rev]) , np.array([min_em,min_em]), np.array([.1,.1]) , facecolor='green')
+    plt.fill_between(np.array([q4_rev, max_rev]) ,np.array([min_em,min_em]),np.array([.1,.1]) , facecolor='orange')
+    plt.plot(list(ecart_moyen_pondere['Montant']) , list(ecart_moyen_pondere['Ecart Moyen Pondéré']) , 'ok')
