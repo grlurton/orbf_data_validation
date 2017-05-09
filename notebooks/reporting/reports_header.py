@@ -21,3 +21,12 @@ plt.rcParams['font.serif'] = "cm"
 
 import warnings
 warnings.filterwarnings('ignore')
+
+from datetime import datetime
+
+# Import the monitoring scripts
+import sys
+sys.path.insert(0, '../../src/monitoring_algorithms/')
+from reports_header import *
+
+%matplotlib inline
