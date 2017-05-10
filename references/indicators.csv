@@ -1,0 +1,29 @@
+indicator_label,indicator_short_label,indicator_group
+Diagnostic et traitement des cas de paludisme simple chez les enfants,,Paludisme
+Diagnostic et traitement des cas de paludisme sévère chez les enfants,,Paludisme
+Diagnostic et traitement des cas de paludisme simple chez les femmes enceintes,,Paludisme
+Diagnostic et traitement des cas de paludisme grave chez les femmes enceintes,,Paludisme
+Femmes enceintes dépistées séropositive et mise sous traitement ARV(tri prophylaxie/trithérapie),,VIH
+Clients sous traitement ARV suivi pendant les 6 premiers mois,,VIH
+Enfants éligibles au traitement ARV et qui ont été initié au traitement ARV au cours du mois,,VIH
+Depistage des cas TBC positifs,,Tuberculose
+Nombre de cas TBC traites et gueris,,Tuberculose
+IST diagnostiqués et traités,,Santé Reproductive
+Consultation prenatale quatrieme visite standard,,CPN
+Consultation prénatale quatrième visite standard femme indigente (prime additionnnelle),,CPN
+Accouchement eutocique assiste,,Accouchement
+Accouchement eutocique assiste femme indigente (prime additionnelle),,Accouchement
+Accouchement: reference d'urgence pour accouchement,,Accouchement
+Nouvelle Consultation Curative,,Consultation Curative
+Suivi de la croissance: enfants de 11 a 59 mois consultes,,Pédiatrie
+Reference et patient arrive a l'hopital,,Consultation Curative
+Nouvelles Consultations curatives Indigents (prime additionnelle),,Consultation Curative
+"CPN 1 standard (y compris VAT, MILD et supplémentation en micronutriments)",,CPN
+"CPN 1 standard (y compris VAT, MILD et supplémentation en micronutriments) pour les Indigentes (prime additionelle)",,CPN
+Consultation postnatale 1 (du 7ème au 10ème jour),,Suivi Postnatal
+consulation postnatale 3 (42ème au 45ème jour suivant l'accouchement),,Suivi Postnatal
+Nombre de nouvelles acceptances pour les méthodes contraceptives de longue durée(DIU et implant),,Planification Familiale
+Nombre de nouvelles acceptances pour les méthodes contraceptives de courte durée,,Planification Familiale
+Vaccination au BCG,,Vaccination
+Enfants completement vaccines,,Vaccination
+Nombre d'enfants ayant reçu le Penta 3,,Vaccination
