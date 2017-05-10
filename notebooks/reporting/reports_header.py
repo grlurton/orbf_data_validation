@@ -2,6 +2,10 @@ import pandas as pd
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+
+# Import the monitoring scripts
+import sys
+sys.path.insert(0, '../../src/monitoring_algorithms/')
 from generic_functions import *
 
 
@@ -23,10 +27,3 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from datetime import datetime
-
-# Import the monitoring scripts
-import sys
-sys.path.insert(0, '../../src/monitoring_algorithms/')
-from reports_header import *
-
-%matplotlib inline
