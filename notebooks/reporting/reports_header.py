@@ -2,14 +2,15 @@ import pandas as pd
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
+from datetime import datetime
+from generic_functions import *
+from IPython.display import set_matplotlib_formats
+import sys
+
 
 # Import the monitoring scripts
-import sys
 sys.path.insert(0, '../../src/monitoring_algorithms/')
-from generic_functions import *
-
-
-from IPython.display import set_matplotlib_formats
 plt.rcParams['figure.autolayout'] = True
 plt.rcParams['figure.figsize'] = 12, 6
 plt.rcParams['axes.labelsize'] = 18
@@ -23,7 +24,4 @@ plt.rcParams['text.usetex'] = True
 plt.rcParams['font.family'] = "serif"
 plt.rcParams['font.serif'] = "cm"
 
-import warnings
 warnings.filterwarnings('ignore')
-
-from datetime import datetime
