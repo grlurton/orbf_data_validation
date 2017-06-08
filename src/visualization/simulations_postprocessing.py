@@ -201,10 +201,10 @@ def make_plot_dataset(validation_trail, mean_supervision_cost):
 
 data_out = make_plot_dataset(aedes_data, mean_supervision_cost)
 
-out = open('../../data/processed/TEMP_aedes_pltdata.pkl', 'wb')
+out = open('data/processed/TEMP_aedes_pltdata.pkl', 'wb')
 pickle.dump(data_out, out, pickle.HIGHEST_PROTOCOL)
 out.close()
 
-out = open('../../data/processed/TEMP_full_data.pkl', 'wb')
+out = open('data/processed/TEMP_full_data.pkl', 'wb')
 pickle.dump(aedes_data, out, pickle.HIGHEST_PROTOCOL)
 out.close()
