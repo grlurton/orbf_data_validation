@@ -10,6 +10,9 @@ This package is developped to help programs using OpenRBF to strategically orien
 * **monitoring_algorithms** contains the utilities to create algorithms and simulate them
 * **visualization** contains the utilities to visualize the results of the simulations, and analyze the outputs
 
+A first description of the results can be found at  `Link text <../Analysis.html>`_
+
+
 Contents:
 
 .. toctree::
