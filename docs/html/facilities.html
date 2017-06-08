@@ -26,7 +26,6 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Defining a Monitoring Algorithm" href="algorithms.html" />
     <link rel="prev" title="Introduction" href="getting-started.html" /> 
   </head>
   <body role="document">
@@ -36,9 +35,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="algorithms.html" title="Defining a Monitoring Algorithm"
-             accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="getting-started.html" title="Introduction"
              accesskey="P">previous</a> |</li>
@@ -54,6 +50,76 @@
   <div class="section" id="building-the-data-into-separate-facilities">
 <h1>Building the data into separate facilities<a class="headerlink" href="#building-the-data-into-separate-facilities" title="Permalink to this headline">¶</a></h1>
 <p>The data consists in many facilities, that will be monitored. The data used to update the monitoring algorithms for each facility depends on the supervision trail that has been triggered. In order to efficiently keep track of each facility and of its trail, we transform the collected in a list of facilities objects with specific information stored, related to facilities.</p>
+<dl class="class">
+<dt id="monitoring_algorithms.facility_monitoring.facility">
+<em class="property">class </em><code class="descclassname">monitoring_algorithms.facility_monitoring.</code><code class="descname">facility</code><span class="sig-paren">(</span><em>data</em>, <em>tarifs</em><span class="sig-paren">)</span><a class="headerlink" href="#monitoring_algorithms.facility_monitoring.facility" title="Permalink to this definition">¶</a></dt>
+<dd><p>A Facility currently under monitoring is followed in time. Its data is updated as time advances, independtly for each algorithm.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data</strong> : the data for a given facility</p>
+<p class="last"><strong>tarifs</strong> : A list of tarifs for the RBF program</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="84%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>facility_id</td>
+<td>(str) The facilities&#8217; unique identifier</td>
+</tr>
+<tr class="row-even"><td>facility_name</td>
+<td>(str) The current name of the facility</td>
+</tr>
+<tr class="row-odd"><td>facility_type</td>
+<td>(str) The administrative type for the facility</td>
+</tr>
+<tr class="row-even"><td>division</td>
+<td>(str) The division in which the facility list_facilities_name</td>
+</tr>
+<tr class="row-odd"><td>departement</td>
+<td>(str) The departement in which the facility lies</td>
+</tr>
+<tr class="row-even"><td>reports</td>
+<td>(list) The data from the reports sent by the facility</td>
+</tr>
+<tr class="row-odd"><td>last_supervision</td>
+<td>(date) The date of the last supervision made in the facility</td>
+</tr>
+<tr class="row-even"><td>supervisions</td>
+<td>(DataFrame) A table of the supervisions made in the facility for each algorithm used</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">arima_report_payment</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">make_reports</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">make_supervision_trail</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">plot_supervision_trail</span></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -65,16 +131,15 @@
 <h3><a href="index.html">Table Of Contents</a></h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Introduction</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Building the data into separate facilities</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building the data into separate facilities</a><ul class="simple">
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="algorithms.html">Defining a Monitoring Algorithm</a></li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="getting-started.html"
                         title="previous chapter">Introduction</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="algorithms.html"
-                        title="next chapter">Defining a Monitoring Algorithm</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -102,9 +167,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="algorithms.html" title="Defining a Monitoring Algorithm"
-             >next</a> |</li>
         <li class="right" >
           <a href="getting-started.html" title="Introduction"
              >previous</a> |</li>

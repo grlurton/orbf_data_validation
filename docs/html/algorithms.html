@@ -25,8 +25,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Building the data into separate facilities" href="facilities.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -35,9 +34,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="facilities.html" title="Building the data into separate facilities"
-             accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">orbf_data_quality 0.1 documentation</a> &#187;</li> 
       </ul>
     </div>  
@@ -78,6 +74,151 @@
 </li>
 </ol>
 <p>We need to specify these two dimensions when initiating the algorithm object, to orient the pre-processing of the data. The inputed data is then processed to form an appropriate training set that can be fed in the Screening algorithm.</p>
+<dl class="class">
+<dt id="monitoring_algorithms.algorithms_definition.monitoring_algorithm">
+<em class="property">class </em><code class="descclassname">monitoring_algorithms.algorithms_definition.</code><code class="descname">monitoring_algorithm</code><span class="sig-paren">(</span><em>algorithm_name</em>, <em>screening_method</em>, <em>alert_trigger</em>, <em>implementation_simulation=None</em>, <em>transversal=False</em>, <em>validation_trail=True</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#monitoring_algorithms.algorithms_definition.monitoring_algorithm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monitoring Algorithm objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>algorithm_name</strong> : string</p>
+<blockquote>
+<div><p>The name of the algorithm, to identify the output in the facility objects</p>
+</div></blockquote>
+<p><strong>screening_method</strong> : function</p>
+<blockquote>
+<div><p>The Screening algorithm. More description on its characteristics in the function.</p>
+</div></blockquote>
+<p><strong>alert_trigger</strong> : function</p>
+<blockquote>
+<div><p>The Triggering algorithm. More description on its characteristics in the function.</p>
+</div></blockquote>
+<p><strong>implementation_simulation</strong> : function</p>
+<blockquote>
+<div><p>The Supervision algorithm. More description on its characteristics in the function.</p>
+</div></blockquote>
+<p><strong>transversal</strong> : boolean</p>
+<blockquote>
+<div><p>True if the data is transveral, False if it is longitudinal.
+False by default.</p>
+</div></blockquote>
+<p><strong>validation_trail</strong> : boolean</p>
+<blockquote>
+<div><p>True if the screening method uses a validation trail as input, False if it uses simple reports.
+False by default.</p>
+</div></blockquote>
+<p><strong>verbose</strong> : boolean</p>
+<blockquote class="last">
+<div><p>True if the user wants to have some monitoring prints in different parts of the functions.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">make_training_set</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">make_transversal_TS</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">monitor</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">return_parameters</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">simulate_implementation</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">trigger_supervisions</span></code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="monitoring_algorithms.algorithms_definition.monitoring_algorithm.make_training_set">
+<code class="descname">make_training_set</code><span class="sig-paren">(</span><em>facility_data</em>, <em>mois</em><span class="sig-paren">)</span><a class="headerlink" href="#monitoring_algorithms.algorithms_definition.monitoring_algorithm.make_training_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preparing the training set to be fed in the algorithm data processing routine. The processing varies depending if the algorithm uses longitudinal or transversal data. For the rest, it essentially takes all the data collected before the processing month and keeps the claimed or the verified data depending on the supervision status for the given month.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>facility_data</strong> : DataFrame</p>
+<blockquote>
+<div><p>The data collected in the OpenRBF system. It does not need to be the subset of the data on which to fit algorithm for the observed month.</p>
+</div></blockquote>
+<p class="last"><strong>mois</strong> : The month for which the algorithm is fit.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="monitoring_algorithms.algorithms_definition.monitoring_algorithm.monitor">
+<code class="descname">monitor</code><span class="sig-paren">(</span><em>facility_data</em>, <em>mois</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#monitoring_algorithms.algorithms_definition.monitoring_algorithm.monitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monitoring function</p>
+<p>This function is the workhorse of the algorithm. It extracts the training set from the facility data, and performs the appropriate screening for the month indicated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>facility_data</strong> : DataFrame</p>
+<blockquote>
+<div><p>The data collected in the OpenRBF system. It does not need to be the subset of the data on which to fit algorithm for the observed month.</p>
+</div></blockquote>
+<p><strong>mois</strong> : The month for which the algorithm is fit.</p>
+<p class="last"><strong>**kwargs</strong> : Additional arguments necessary for the specific algorithm</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="monitoring_algorithms.algorithms_definition.monitoring_algorithm.simulate_implementation">
+<code class="descname">simulate_implementation</code><span class="sig-paren">(</span><em>date_start</em>, <em>date_stop</em>, <em>data</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#monitoring_algorithms.algorithms_definition.monitoring_algorithm.simulate_implementation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulates the implementation of the algorithm. Runs the data processing and triggering rules, and applies the supervision rule, then saves the supervision status of the reporting month for each facility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>date_start</strong> : Start date of the simulation</p>
+<p><strong>date_stop</strong> : Finish date of the simulation</p>
+<p><strong>data</strong> : Full open rbf data formatted in facilities objects</p>
+<p class="last"><strong>**kwargs</strong> : Additional arguments necessary for the specific algorithm</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="monitoring_algorithms.algorithms_definition.monitoring_algorithm.trigger_supervisions">
+<code class="descname">trigger_supervisions</code><span class="sig-paren">(</span><em>mois</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#monitoring_algorithms.algorithms_definition.monitoring_algorithm.trigger_supervisions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raising an alarm if the description parameters computed by the monitoring function are problematic according to the <cite>alert_trigger</cite> function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mois</strong> : The month for which the algorithm is fit.</p>
+<p class="last"><strong>**kwargs</strong> : Additional arguments necessary for the specific algorithm</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -90,12 +231,11 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="facilities.html">Building the data into separate facilities</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Defining a Monitoring Algorithm</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Defining a Monitoring Algorithm</a><ul class="simple">
+</ul>
+</li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="facilities.html"
-                        title="previous chapter">Building the data into separate facilities</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -123,9 +263,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="facilities.html" title="Building the data into separate facilities"
-             >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">orbf_data_quality 0.1 documentation</a> &#187;</li> 
       </ul>
     </div>
