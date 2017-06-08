@@ -1,30 +1,11 @@
-from generic_functions import *
+# from generic_functions import *
 import pandas as pd
 
 class monitoring_algorithm(object):
     """ Monitoring Algorithm objects
 
-    Monitoring algorithms are the combination of three sub-algorithms :
-    1. A Screening algorithm, that processes the available data and outputs description parameters of this data.
-    2. A Triggering algorithm that analyses the description parameters and returns a binary decision, regarding the necessity to go verify the data in reported in a given reported.
-    3. A Supervision algorithm, that describes the concrete implementation of the monitoring in the field.
-
-    The combination of these three elements uniquely define a monitoring strategy for a program. At each steps, the facility objects are updated to include the values of the supervision paraemters, and the result of the trigger algorithm.
-
-    The Screening algorithms input can be classified along two dimentsions :
-    1. Longitudinal vs Transversal :
-        * Longitudinal data : Using only one facility, the algorithm considers the past validated values and infers the characteristics of the next expected values.
-        * Transversal data : Using a group of facilities, the algorithm compares the different facilities performances and their values.
-    2. Simple reports vs Validation trail :
-        * Simple reports : The algorithm uses only the values previously validated in the facilities.
-        * Validation trails : The algorithm uses both the reported values and the validated values.
-
-    We need to specify these two dimensions when initiating the algorithm object, to orient the pre-processing of the data. The inputed data is then processed to form an appropriate training set that can be fed in the Screening algorithm.
-
-
-
     Parameters
-    -------------
+    ----------
     algorithm_name : string
         The name of the algorithm, to identify the output in the facility objects
     screening_method : function
@@ -44,8 +25,8 @@ class monitoring_algorithm(object):
 
 
     """
-    def __init__(self  , algorithm_name , screening_method , alert_trigger  , implementation_simulation = None ,
-                    transversal = False , validation_trail = True , verbose = False) :
+
+    def __init__(self, algorithm_name, screening_method, alert_trigger, implementation_simulation=None, transversal=False, validation_trail=True, verbose=False):
         self.algorithm_name = algorithm_name
         self.transversal = transversal
         self.validation_trail = validation_trail
@@ -55,115 +36,174 @@ class monitoring_algorithm(object):
         self.implementation_simulation = implementation_simulation
         self.verbose = verbose
 
-    def monitor(self , facility_data , mois , **kwargs):
-        if self.transversal == True :
-            self.list_facilities_name = get_name_facilities_list(facility_data , mois)
+    def monitor(self, facility_data, mois, **kwargs):
+        """ Monitoring function
+
+        This function is the workhorse of the algorithm. It extracts the training set from the facility data, and performs the appropriate screening for the month indicated.
+
+        Parameters
+        -----------
+        facility_data : DataFrame
+            The data collected in the OpenRBF system. It does not need to be the subset of the data on which to fit algorithm for the observed month.
+        mois : The month for which the algorithm is fit.
+        **kwargs : Additional arguments necessary for the specific algorithm
+        """
+        if self.transversal is True:
+            self.list_facilities_name = get_name_facilities_list(facility_data,
+                                                                 mois)
         self.facility_data = facility_data
-        if self.transversal == True :
-            assert type(self.facility_data) == list , "This algorithm takes a list of facilities"
-            if self.verbose == True :
+        if self.transversal is True:
+            assert type(self.facility_data) == list, "This algorithm takes a list of facilities"
+            if self.verbose is True:
                 print('Computing a transversal training set')
-            self.list_name_facilites=  get_name_facilities_list(facility_data , mois)
-            self.training_data = self.make_transversal_training_set(self.facility_data , mois)
-        if self.transversal == False :
-            assert type(self.facility_data) == 'facility_monitoring.facility' , "This algorithm takes a facility as input"
-            self.training_data = self.make_training_set(self.facility_data , mois)
-        if self.verbose == True :
+            self.list_name_facilites = get_name_facilities_list(facility_data,
+                                                                mois)
+            self.training_data = self.make_transversal_TS(self.facility_data,
+                                                          mois)
+        if self.transversal is False:
+            assert type(self.facility_data) == 'facility_monitoring.facility', "This algorithm takes a facility as input"
+            self.training_data = self.make_training_set(self.facility_data,
+                                                        mois)
+        if self.verbose is True:
             print('Screening the data')
-        screen_output = self.screening_method(self.training_data  , mois ,  **kwargs)
+        screen_output = self.screening_method(self.training_data, mois,
+                                              **kwargs)
 
         self.description_parameters = screen_output['description_parameters']
 
+    def trigger_supervisions(self, mois, **kwargs):
+        """ Raising an alarm if the description parameters computed by the monitoring function are problematic according to the `alert_trigger` function.
 
-    def trigger_supervisions(self , mois , **kwargs):
-        ## TODO Finalize triggering for the longitudinal case
+        Parameters
+        ----------
+        mois : The month for which the algorithm is fit.
+        **kwargs : Additional arguments necessary for the specific algorithm
+
+
+        """
+        # TODO Finalize triggering for the longitudinal case
         print(mois)
         self.mois = mois
-        alert = self.alert_trigger(self.description_parameters , **kwargs)
+        alert = self.alert_trigger(self.description_parameters, **kwargs)
         self.supervision_list = alert
 
     def return_parameters(self):
-        if self.transversal == False :
+        if self.transversal is False:
             self.facility_data.description_parameters = self.description_parameters
-        if self.transversal == True :
-            for facility in self.list_facilities_name :
-                try :
-                    fac_obj = get_facility(self.facility_data , facility)
-                    if (facility in self.supervision_list) :
-                        fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([True] , index = [self.mois] , columns = [self.algorithm_name]))
-                    if (facility not in self.supervision_list) & (facility in self.training_data.index.levels[1]) :
-                        fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame([False] , index = [self.mois] , columns = [self.algorithm_name]))
-                    if (facility not in self.supervision_list) & (facility not in self.training_data.index.levels[1]) :
-                        fac_obj.supervisions = fac_obj.supervisions.append(pd.DataFrame(['Initial Training' ] , index = [self.mois] , columns = [self.algorithm_name]))
+        if self.transversal is True:
+            for facility in self.list_facilities_name:
+                try:
+                    fac_obj = get_facility(self.facility_data, facility)
+                    if (facility in self.supervision_list):
+                        sup = pd.DataFrame([True], index=[self.mois],
+                                           columns=[self.algorithm_name])
+                        fac_obj.supervisions = fac_obj.supervisions.append(sup)
+                    if ((facility not in self.supervision_list) &
+                       (facility in self.training_data.index.levels[1])):
+                        nosup = pd.DataFrame([False], index=[self.mois],
+                                             columns=[self.algorithm_name])
+                        fac_obj.supervisions = fac_obj.supervisions.append(nosup)
+                    if ((facility not in self.supervision_list) &
+                       (facility not in self.training_data.index.levels[1])):
+                        IT = pd.DataFrame(['Initial Training'],
+                                          index=[self.mois],
+                                          columns=[self.algorithm_name])
+                        fac_obj.supervisions = fac_obj.supervisions.append()
                     self.facility_data[self.list_name_facilites.index(facility)] = fac_obj
-                except ValueError :
-                    pass ## eg : Akadja Mi seems to be out...
+                except ValueError:
+                    pass  # eg : Akadja Mi seems to be out...
 
-    def make_training_set(self  , facility_data  , mois) :
+    def make_training_set(self, facility_data, mois):
+        """ Preparing the training set to be fed in the algorithm data processing routine. The processing varies depending if the algorithm uses longitudinal or transversal data. For the rest, it essentially takes all the data collected before the processing month and keeps the claimed or the verified data depending on the supervision status for the given month.
+
+        Parameters
+        ----------
+        facility_data : DataFrame
+            The data collected in the OpenRBF system. It does not need to be the subset of the data on which to fit algorithm for the observed month.
+        mois : The month for which the algorithm is fit.
+
+        """
         algorithm_name = self.algorithm_name
         facility_name = facility_data.facility_name
         departement = facility_data.departement
         supervisions = facility_data.supervisions
         reports_months = facility_data.reports.index.levels[0]
         training_months = reports_months[reports_months < mois].unique()
-        if len(training_months) > 0 :
-            if (algorithm_name not in list(supervisions.columns)) :
-                supervisions = pd.DataFrame(['Initial Training']*len(training_months) , index = training_months , columns = [algorithm_name])
-                if self.transversal == False :
+        if len(training_months) > 0:
+            if (algorithm_name not in list(supervisions.columns)):
+                supervisions = pd.DataFrame(['Initial Training']*len(training_months), index=training_months, columns=[algorithm_name])
+                if self.transversal is False:
                     self.facility_data.supervisions = self.facility_data.supervisions.append(supervisions)
-                if self.transversal == True :
+                if self.transversal is True:
                     index_fac = self.list_name_facilites.index(facility_name)
                     self.facility_data[index_fac].supervisions = self.facility_data[index_fac].supervisions.append(supervisions)
             if (algorithm_name in list(supervisions.columns)):
-                verified_months =  supervisions.index[supervisions[algorithm_name].isin([True , 'Initial Training'])]
-                unverified_months = supervisions.index[supervisions[algorithm_name] == False]
-                verified_data =  pd.DataFrame([] , index = [])
-                claimed_data =  pd.DataFrame([] , index = [])
-                if (len(list(verified_months)) > 0) | (type(verified_months) == 'Period') :
-                    try :
-                        verified_data = facility_data.reports.loc[list(verified_months) , ['indicator_claimed_value'  , 'indicator_verified_value' , 'indicator_tarif']]
-                        verified_data.columns = ['indicator_claimed_value' ,'indicator_validated_value' , 'indicator_tarif']
-                    except KeyError :
+                verified_months = supervisions.index[supervisions[algorithm_name].isin([True, 'Initial Training'])]
+                unverified_months = supervisions.index[supervisions[algorithm_name] is False]
+                verified_data = pd.DataFrame([], index=[])
+                claimed_data = pd.DataFrame([], index=[])
+                if (len(list(verified_months)) > 0) | (type(verified_months) == 'Period'):
+                    try:
+                        verified_data = facility_data.reports.loc[list(verified_months), ['indicator_claimed_value', 'indicator_verified_value', 'indicator_tarif']]
+                        verified_data.columns = ['indicator_claimed_value', 'indicator_validated_value', 'indicator_tarif']
+                    except KeyError:
                         pass
-                if len(list(unverified_months)) > 0 | (type(unverified_months) == 'Period') :
-                    try :
-                        claimed_data = facility_data.reports.loc[list(unverified_months) , ['indicator_claimed_value'  , 'indicator_claimed_value' , 'indicator_tarif']]
-                        claimed_data.columns = ['indicator_claimed_value' , 'indicator_validated_value' , 'indicator_tarif']
+                if len(list(unverified_months)) > 0 | (type(unverified_months) == 'Period'):
+                    try:
+                        claimed_data = facility_data.reports.loc[list(unverified_months), ['indicator_claimed_value', 'indicator_claimed_value', 'indicator_tarif']]
+                        claimed_data.columns = ['indicator_claimed_value', 'indicator_validated_value', 'indicator_tarif']
 
-                    except( KeyError , TypeError ):
+                    except(KeyError, TypeError):
                         pass
 
-                validated_data = verified_data.append(claimed_data)
-                validated_data['facility_name'] = facility_name
-                validated_data['departement'] = departement
-                if len(validated_data) > 0 :
-                    try :
-                        validated_data = validated_data.reset_index().set_index(['departement' , 'facility_name' , 'period'  , 'indicator_label']).reorder_levels(['departement' , 'facility_name' , 'period' , 'indicator_label']).sort_index()
-                    except KeyError :
+                valid_data = verified_data.append(claimed_data)
+                valid_data['facility_name'] = facility_name
+                valid_data['departement'] = departement
+                if len(valid_data) > 0:
+                    try:
+                        valid_data = valid_data.reset_index()
+                        valid_data = valid_data.set_index(['departement',
+                                                          'facility_name',
+                                                           'period',
+                                                           'indicator_label'])
+                        valid_data = valid_data.reorder_levels(['departement',
+                                                                'facility_name',
+                                                                'period',
+                                                                'indicator_label'])
+                        valid_data = valid_data.sort_index()
+                    except KeyError:
                         pass
-            return validated_data
+            return valid_data
 
-    def make_transversal_training_set(self , data , mois):
-        def get_training_set(facility_data , mois = mois):
-            return self.make_training_set(facility_data , mois)
-        to_include = get_name_facilities_list(data , mois )
-        data = [get_facility(data , x)  for x in to_include]
-        transversal_training_set = list(map(get_training_set , data))
+    def make_transversal_TS(self, data, mois):
+        def get_training_set(facility_data, mois=mois):
+            return self.make_training_set(facility_data, mois)
+        to_include = get_name_facilities_list(data, mois)
+        data = [get_facility(data, x) for x in to_include]
+        transversal_training_set = list(map(get_training_set, data))
         transversal_training_set = pd.concat(transversal_training_set)
         return transversal_training_set
 
-    def simulate_implementation(self , date_start , date_stop  , data , **kwargs):
-        if self.transversal == True :
+    def simulate_implementation(self, date_start, date_stop, data, **kwargs):
+        """ Simulates the implementation of the algorithm. Runs the data processing and triggering rules, and applies the supervision rule, then saves the supervision status of the reporting month for each facility.
+
+        Parameters
+        ----------
+        date_start : Start date of the simulation
+        date_stop : Finish date of the simulation
+        data : Full open rbf data formatted in facilities objects
+        **kwargs : Additional arguments necessary for the specific algorithm
+        """
+        if self.transversal is True:
             def date_range(fac):
                 return fac.reports.index.levels[0]
-            full_dates = list(map(date_range , data))
+            full_dates = list(map(date_range, data))
             dates = full_dates[0]
-            for n in range(1,len(full_dates)):
+            for n in range(1, len(full_dates)):
                 dates.union(full_dates[n])
             months_to_screen = sorted(dates[(dates >= date_start) & (dates <= date_stop)])
-        self.implementation_simulation(self.monitor , self.trigger_supervisions ,  self.return_parameters , data , months_to_screen, **kwargs)
+        self.implementation_simulation(self.monitor, self.trigger_supervisions, self.return_parameters, data, months_to_screen, **kwargs)
 
 
-## TODO When updating the training set, Need to assert it is not already up to date.
-## TODO When updating the training set, if there are missing periods, raise a warning => for now, try except
-## TODO les routines de description se font a partir des facility objects
+# TODO assert training set not already before updating
+# TODO les routines de description se font a partir des facility objects

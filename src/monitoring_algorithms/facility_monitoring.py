@@ -1,25 +1,45 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from reports_monitoring import *
+#from reports_monitoring import *
 
 class facility(object):
-    """ A Facility currently under monitoring
+    """ A Facility currently under monitoring is followed in time. Its data is updated as time advances, independtly for each algorithm.
 
+    Parameters
+    ----------
+    data : the data for a given facility
+    tarifs : A list of tarifs for the RBF program
+
+    Attributes
+    ----------
+    facility_id : str
+        The facilities' unique identifier
+    facility_name : str
+        The current name of the facility
+    facility_type : str
+        The administrative type for the facility
+    division : str
+        The division in which the facility list_facilities_name
+    departement : str
+        The departement in which the facility lies
+    reports : list
+        The data from the reports sent by the facility
+    last_supervision : date
+        The date of the last supervision made in the facility
+    supervisions : DataFrame
+        A table of the supervisions made in the facility for each algorithm used
     """
 
     def __init__(self , data , tarifs) :
         self.facility_id = data.entity_id.iloc[0]
         self.facility_name = data.entity_name.iloc[0]
         self.facility_type = data.entity_type.iloc[0]
-        self.facility_status = data.entity_status.iloc[0]
         self.division = data.geozone_name.iloc[0]
         self.departement = data.parent_geozone_name.iloc[0]
         self.reports = self.make_reports(data)
-        self.arima_forecast = []
         self.last_supervision = None
         self.supervisions = pd.DataFrame([] , index = [])
-        self.screening_trace = {}
 
     def make_reports(self , data):
         columns_to_keep = ['indicator_label' , 'indicator_claimed_value' , 'indicator_verified_value' , 'indicator_tarif' , 'period']

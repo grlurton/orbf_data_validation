@@ -1,7 +1,7 @@
 orbf_data_quality
 ==============================
 
-We aim at predicting data quality in Open RBF based on existing reporting, and on DHIS2 reports.
+We aim at predicting data quality in Open RBF based on existing reporting,.
 
 Running Project
 ------------
@@ -22,7 +22,7 @@ Project Organization
     │   ├── processed      <- The data that has been processed and ready for modeling
     │   └── raw            <- Original Data obtained from Bluesquare.
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
+    ├── docs               <- Documentation for the project
     │
     ├── models             <- Trained and serialized models, model predictions, or model summaries
     │
