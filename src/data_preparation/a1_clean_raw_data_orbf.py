@@ -1,12 +1,24 @@
 import pandas as pd
 import numpy as np
 import json as json
+import os
+from dotenv import load_dotenv, find_dotenv
+
+# find .env automagically by walking up directories until it's found
+dotenv_path = find_dotenv()
+
+# load up the entries as environment variables
+load_dotenv(dotenv_path)
+
+benin_path = os.environ.get("data_benin")
 
 
-data = pd.read_csv('../../data/raw/orbf_benin.csv' , delimiter = ';')
 
-import codecs
-indicators_names = pd.read_json(codecs.open('../../data/raw/pbf_indicatorstranslations.json' , encoding = 'utf-8'))
+data = pd.read_csv(benin_path + 'orbf_benin.csv' , delimiter = ';')
+
+#import codecs
+#indicators_names = pd.read_json(codecs.open(benin_path + 'pbf_indicatorstranslations.json' , encoding = 'utf-8'))
+indicators_names = pd.read_json(benin_path + 'pbf_indicatorstranslations.json')
 
 ## Keep only data with claimed and verified values
 print('Length Complete Data :' + str(len(data)))
@@ -70,6 +82,6 @@ data_out = dat_to_keep[to_export]
 print('Final Length of data : ' , str(len(data_out)))
 print('Exporting the Data in HD5 file')
 
-store = pd.HDFStore('../../data/processed/orbf_benin.h5')
+store = pd.HDFStore('data/processed/orbf_benin.h5')
 store['data'] = data_out
 store.close()
