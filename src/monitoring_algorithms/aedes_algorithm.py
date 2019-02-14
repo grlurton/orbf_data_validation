@@ -1,4 +1,4 @@
-from generic_functions import *
+from generic_functions import get_ecarts, get_revenu_gagne,  get_volume_financier_recupere, get_payments
 import pandas as pd
 import numpy as np
 
@@ -57,7 +57,7 @@ def classify_facilities(ecart_moyen_pond):
     ecart_moyen_pond.loc[(ecart_moyen_pond['Montant'] > q4_rev) &
                          (ecart_moyen_pond['Ecart Moyen Pondéré'] <= 0.1),
                          'Class'] = 'orange'
-    ecart_moyen_pond = ecart_moyen_pondere.sort('Class')
+    ecart_moyen_pond = ecart_moyen_pond.sort('Class')
     return ecart_moyen_pond
 
 
