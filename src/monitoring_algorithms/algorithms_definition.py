@@ -37,7 +37,7 @@ class monitoring_algorithm(object):
         self.verbose = verbose
 
     def monitor(self, facility_data, mois, **kwargs):
-        """ Monitoring function
+        """Monitoring function.
 
         This function is the workhorse of the algorithm. It extracts the training set from the facility data, and performs the appropriate screening for the month indicated.
 
@@ -47,6 +47,7 @@ class monitoring_algorithm(object):
             The data collected in the OpenRBF system. It does not need to be the subset of the data on which to fit algorithm for the observed month.
         mois : The month for which the algorithm is fit.
         **kwargs : Additional arguments necessary for the specific algorithm
+
         """
         if self.transversal is True:
             self.list_facilities_name = get_name_facilities_list(facility_data,
@@ -72,13 +73,12 @@ class monitoring_algorithm(object):
         self.description_parameters = screen_output['description_parameters']
 
     def trigger_supervisions(self, mois, **kwargs):
-        """ Raising an alarm if the description parameters computed by the monitoring function are problematic according to the `alert_trigger` function.
+        """Raise an alarm if the description parameters computed by the monitoring function are problematic according to the `alert_trigger` function.
 
         Parameters
         ----------
         mois : The month for which the algorithm is fit.
         **kwargs : Additional arguments necessary for the specific algorithm
-
 
         """
         # TODO Finalize triggering for the longitudinal case
@@ -114,7 +114,7 @@ class monitoring_algorithm(object):
                     pass  # eg : Akadja Mi seems to be out...
 
     def make_training_set(self, facility_data, mois):
-        """ Preparing the training set to be fed in the algorithm data processing routine. The processing varies depending if the algorithm uses longitudinal or transversal data. For the rest, it essentially takes all the data collected before the processing month and keeps the claimed or the verified data depending on the supervision status for the given month.
+        """Prepare the training set to be fed in the algorithm data processing routine. The processing varies depending if the algorithm uses longitudinal or transversal data. For the rest, it essentially takes all the data collected before the processing month and keeps the claimed or the verified data depending on the supervision status for the given month.
 
         Parameters
         ----------
@@ -185,7 +185,7 @@ class monitoring_algorithm(object):
         return transversal_training_set
 
     def simulate_implementation(self, date_start, date_stop, data, **kwargs):
-        """ Simulates the implementation of the algorithm. Runs the data processing and triggering rules, and applies the supervision rule, then saves the supervision status of the reporting month for each facility.
+        """ Simulate the implementation of the algorithm. Runs the data processing and triggering rules, and applies the supervision rule, then saves the supervision status of the reporting month for each facility.
 
         Parameters
         ----------

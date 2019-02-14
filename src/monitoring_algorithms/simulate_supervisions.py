@@ -1,7 +1,6 @@
 # For warnings
 import warnings
 import time
-import numpy as np
 import ipyparallel
 import subprocess
 import pickle
@@ -27,10 +26,15 @@ for i in range(0, 100):
         break
 
 print('Loading Data')
+facilities = pd.read_pickle('../../data/processed/facilities.pkl')
+
+a = facilities[0]
+
+a.facility_name
+
 pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
-
 # Run Aedes Algorithm
 aedes_algorithm = monitoring_algorithm('aedes_80', screen_function,
                                        draw_supervision_months,

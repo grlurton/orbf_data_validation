@@ -1,5 +1,3 @@
-%%time
-
 # For warnings
 import warnings
 warnings.filterwarnings('ignore')
@@ -9,6 +7,8 @@ import time
 import ipyparallel
 import subprocess
 import pickle
+import pandas as pd
+
 start_cluster_command = 'ipcluster start -n 4'
 subprocess.Popen(start_cluster_command)
 
@@ -25,7 +25,7 @@ for i in range(0,100):
         break
 
 print('Loading Data')
-import pandas as pd
+
 
 pkl_file = open('../../data/processed/facilities.pkl', 'rb')
 facilities = pickle.load(pkl_file)
