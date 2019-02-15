@@ -26,13 +26,8 @@ for i in range(0, 100):
         break
 
 print('Loading Data')
-facilities = pd.read_pickle('../../data/processed/facilities.pkl')
 
-a = facilities[0]
-
-a.facility_name
-
-pkl_file = open('../../data/processed/facilities.pkl', 'rb')
+pkl_file = open("data/processed/facilities.pkl", 'rb')
 facilities = pickle.load(pkl_file)
 pkl_file.close()
 # Run Aedes Algorithm

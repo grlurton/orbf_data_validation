@@ -3,8 +3,6 @@
 ##
 ##  v1   - 3/2017 : Creates the serie objects + methods for diagnostic. Simple algorith = median + 2sd
 
-
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -143,8 +141,6 @@ class serie(object):
                         'sensitivity':sensitivity , 'specificity':specificity , 'fac_id':self.facility , 'indicator':self.indicator}
         self.diagnostic = diagnostic
         return self
-
-data.indicator_label
 
 a = serie(data , 2 , 'Enfants completement vaccines')
 
