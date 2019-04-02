@@ -1,29 +1,23 @@
-# Results Based Verification algorithms
-==============================
+# Developing and benchmarking Risk Based Verification algorithms for RBF programs
+===========================================================
 
 ## Project description
 
-This project started as a consultancy with the information systems startup [Bluesquare](https://bluesquarehub.com/). Bluesquare provides information systems solutions for health programs in developing countries. Their platform [OpenRBF 2.0](https://bluesquarehub.com/services/openrbf-2-0/) is aimed at collecting reports from Results Based Funding programs.
+This project is part of [Bluesquare](https://bluesquarehub.com/)'s efforts to provide innovative solutions to mobilise and use health data to improve the organisation and delivery of health care in developing countries.
 
-In most  Results Based Funding programs using OpenRBF, facilities submit monthly reports to the financing entity. These reports are then verified by on site supervisions, and payments are made on the verified data. The organisation of such systems is described in details in :
+In most  Results Based Funding programs, facilities submit monthly reports to the financing entity. These reports are then verified by on site supervisions, and payments are made on the verified data. This verification ensures the payments made are based on tracable data, and thus offers incentives to improve data quality in health facilities. It is nonetheless costly to implement as verifications have to be performed every month in every facilities .
 
-This full verification ensures the accuracy of the payments made, but is costly to implement. This project aimed at defining and testing algorithms to orient program managers willing to only verify subsets of the data reported each month.
+In order to reduce verification costs while still mitigating risks of over and under payments, we work on developing a set of algorithms, usable by RBF programs. This project aimed at defining and testing algorithms to orient program managers willing to only verify subsets of the data reported before making payments.
 
-## Project Content
+## Project Dimensions
 
 ### Algorithms development
 
-### Demonstration
-
-### Code
-
-### Documentation
+### Benchmarking
 
 ## Contacts
 
 Grégoire Lurton, (twitter: grlurton)
-Antoine Legrand
-Matthieu Antony
 
 ## Repository organization
 
@@ -32,14 +26,9 @@ Running Project
 
 Raw data is placed under data/raw/orbf_benin.csv. The script src/data/make_dataset.py should build the data used for analysis. All notebooks should run smoothly from there.
 
-
-
 Project Organization
 ------------
 
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- What you are currently reading
     ├── data               <- Not commited in Git. Contact Bluesquare to discuss access.
     │   ├── external       <- Data from third party sources.
     │   ├── interim        <- Intermediate data that has been transformed.
@@ -62,7 +51,6 @@ Project Organization
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment
     │
     ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
     │   │
     |   ├── alarm_classification <- Scripts for classification of the different types of alarms raised by monitoring algorithms
     │   ├── data_preparation     <- Scripts to prepare data
