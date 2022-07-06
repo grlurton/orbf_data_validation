@@ -1,7 +1,31 @@
-orbf_data_quality
+# Results Based Verification algorithms
 ==============================
 
-We aim at predicting data quality in Open RBF based on existing reporting,.
+## Project description
+
+This project started as a consultancy with the information systems startup [Bluesquare](https://bluesquarehub.com/). Bluesquare provides information systems solutions for health programs in developing countries. Their platform [OpenRBF 2.0](https://bluesquarehub.com/services/openrbf-2-0/) is aimed at collecting reports from Results Based Funding programs.
+
+In most  Results Based Funding programs using OpenRBF, facilities submit monthly reports to the financing entity. These reports are then verified by on site supervisions, and payments are made on the verified data. The organisation of such systems is described in details in :
+
+This full verification ensures the accuracy of the payments made, but is costly to implement. This project aimed at defining and testing algorithms to orient program managers willing to only verify subsets of the data reported each month.
+
+## Project Content
+
+### Algorithms development
+
+### Demonstration
+
+### Code
+
+### Documentation
+
+## Contacts
+
+Grégoire Lurton, (twitter: grlurton)
+Antoine Legrand
+Matthieu Antony
+
+## Repository organization
 
 Running Project
 ------------
@@ -16,7 +40,7 @@ Project Organization
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- What you are currently reading
-    ├── data               <- Not commited in Git
+    ├── data               <- Not commited in Git. Contact Bluesquare to discuss access.
     │   ├── external       <- Data from third party sources.
     │   ├── interim        <- Intermediate data that has been transformed.
     │   ├── processed      <- The data that has been processed and ready for modeling
