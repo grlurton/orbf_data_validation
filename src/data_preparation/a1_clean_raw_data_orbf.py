@@ -10,15 +10,11 @@ dotenv_path = find_dotenv()
 # load up the entries as environment variables
 load_dotenv(dotenv_path)
 
-benin_path = os.environ.get("data_benin")
-
-
-
-data = pd.read_csv(benin_path + 'orbf_benin.csv' , delimiter = ';')
+data = pd.read_csv("data/raw/orbf_benin.csv" , delimiter = ';')
 
 #import codecs
 #indicators_names = pd.read_json(codecs.open(benin_path + 'pbf_indicatorstranslations.json' , encoding = 'utf-8'))
-indicators_names = pd.read_json(benin_path + 'pbf_indicatorstranslations.json')
+indicators_names = pd.read_json('data/raw/pbf_indicatorstranslations.json')
 
 ## Keep only data with claimed and verified values
 print('Length Complete Data :' + str(len(data)))

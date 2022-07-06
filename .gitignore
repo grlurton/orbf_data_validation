@@ -5,12 +5,17 @@ __pycache__/
 # C extensions
 *.so
 
+# Work
+.vscode
+
 # Distribution / packaging
 .Python
 env/
 develop-eggs/
 dist/
 downloads/
+data/
+references/
 eggs/
 .eggs/
 lib/
@@ -73,3 +78,4 @@ target/
 
 # Some Documentation
 *.pptx
+full_data_2.csv
